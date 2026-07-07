@@ -205,7 +205,18 @@ export default function OnboardingPage() {
       {/* Sidebar Onboarding Progress */}
       <div className="hidden md:flex flex-col w-80 border-r border-[#1F1F1F] bg-[#0E0E0E] p-8 space-y-8">
         <div className="flex items-center gap-2">
-          <div className="h-6 w-6 rounded bg-[#0066FF] flex items-center justify-center font-bold text-sm">I</div>
+          <svg className="h-6 w-6" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+              <linearGradient id="logoGradOnboarding" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stopColor="#0066FF" />
+                <stop offset="100%" stopColor="#00F5FF" />
+              </linearGradient>
+            </defs>
+            <circle cx="50" cy="50" r="40" stroke="url(#logoGradOnboarding)" strokeWidth="8" strokeLinecap="round" strokeDasharray="180 60" />
+            <path d="M50 30 V70" stroke="url(#logoGradOnboarding)" strokeWidth="10" strokeLinecap="round" />
+            <circle cx="50" cy="18" r="4" fill="#FFFFFF" />
+          </svg>
+
           <span className="font-semibold tracking-tight text-white">Interview OS</span>
         </div>
 

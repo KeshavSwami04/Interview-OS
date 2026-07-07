@@ -7,9 +7,18 @@ export default function Home() {
       {/* Navigation */}
       <header className="w-full max-w-7xl mx-auto px-6 py-6 flex items-center justify-between border-b border-[#121212]">
         <div className="flex items-center gap-2">
-          <div className="h-7 w-7 rounded bg-[#0066FF] flex items-center justify-center font-bold text-white text-sm">
-            I
-          </div>
+          <svg className="h-7 w-7" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+              <linearGradient id="logoGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stopColor="#0066FF" />
+                <stop offset="100%" stopColor="#00F5FF" />
+              </linearGradient>
+            </defs>
+            <circle cx="50" cy="50" r="40" stroke="url(#logoGrad)" strokeWidth="8" strokeLinecap="round" strokeDasharray="180 60" />
+            <path d="M50 30 V70" stroke="url(#logoGrad)" strokeWidth="10" strokeLinecap="round" />
+            <circle cx="50" cy="18" r="4" fill="#FFFFFF" />
+          </svg>
+
           <span className="font-semibold tracking-tight text-white text-lg">Interview OS</span>
         </div>
         <Link 
