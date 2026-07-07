@@ -242,8 +242,16 @@ export default function InterviewWorkspace({ interview, initialMessages }: Inter
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          chatHistory: messages.slice(-4), // send last 4 turns for context
-          codeState: codeContent
+          chatHistory: messages.slice(-6), // send last 6 turns for richer context
+          codeState: codeContent,
+          interviewContext: {
+            title: interview.title,
+            type: interview.type,
+            role: interview.role,
+            difficulty: interview.difficulty,
+            agenda: interview.agenda,
+            currentLanguage: editorLanguage,
+          }
         })
       })
       if (!response.ok) throw new Error('Failed to load hint')
