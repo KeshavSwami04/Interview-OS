@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState, useEffect, useRef } from 'react'
+import React, { useState, useEffect, useRef, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
 import Editor from '@monaco-editor/react'
 import { motion } from 'framer-motion'
@@ -41,16 +41,57 @@ export default function InterviewWorkspace({ interview, initialMessages }: Inter
   const [hintText, setHintText] = useState<string | null>(null)
   const [loadingHint, setLoadingHint] = useState(false)
 
+  // Build a multi-language template map — db templates take priority, client fallbacks always available
+  const defaultTemplates = useMemo(() => {
+    const db = interview.agenda?.[0]?.templates || {}
+    const interviewType = interview.type || ''
+
+    const isLRU = interviewType.includes('CS Fundamentals') || interviewType.includes('System Design')
+    const isPR  = interviewType.includes('PR Critique')
+
+    const fallback = isLRU ? {
+      javascript: `// CS Fundamentals: Design an LRU Cache with O(1) reads/writes\nclass LRUCache {\n    constructor(capacity) {\n        this.capacity = capacity;\n        this.cache = new Map();\n    }\n    get(key) { return -1; }\n    put(key, value) {}\n}`,
+      typescript: `// CS Fundamentals: LRU Cache\nclass LRUCache {\n    private capacity: number;\n    private cache = new Map<number,number>();\n    constructor(capacity: number) { this.capacity = capacity; }\n    get(key: number): number { return -1; }\n    put(key: number, value: number): void {}\n}`,
+      python: `# CS Fundamentals: LRU Cache\nclass LRUCache:\n    def __init__(self, capacity: int):\n        self.capacity = capacity\n        self.cache = {}\n    def get(self, key: int) -> int:\n        return -1\n    def put(self, key: int, value: int) -> None:\n        pass`,
+      cpp: `#include <unordered_map>\n#include <list>\nusing namespace std;\n\nclass LRUCache {\nprivate:\n    int capacity;\n    list<pair<int,int>> lru;\n    unordered_map<int, list<pair<int,int>>::iterator> cache;\npublic:\n    LRUCache(int cap) : capacity(cap) {}\n    int get(int key) { return -1; }\n    void put(int key, int value) {}\n};`,
+      java: `import java.util.*;\n\nclass LRUCache {\n    private int capacity;\n    private LinkedHashMap<Integer,Integer> cache;\n    public LRUCache(int capacity) {\n        this.capacity = capacity;\n        this.cache = new LinkedHashMap<>(16, 0.75f, true);\n    }\n    public int get(int key) { return -1; }\n    public void put(int key, int value) {}\n}`,
+      go: `package main\n\ntype LRUCache struct {\n    capacity int\n}\nfunc Constructor(capacity int) LRUCache { return LRUCache{capacity} }\nfunc (c *LRUCache) Get(key int) int { return -1 }\nfunc (c *LRUCache) Put(key int, value int) {}`,
+      sql: `-- LRU-style eviction query\nSELECT key, value FROM cache ORDER BY last_accessed ASC LIMIT 1;`
+    } : isPR ? {
+      javascript: `// PR Critique: Find the concurrency race condition\nconst sessions = {};\nasync function handleAccess(userId, token) {\n    if (sessions[userId]) {\n        await new Promise(r => setTimeout(r, 100));\n        delete sessions[userId];\n    }\n    sessions[userId] = { token, since: Date.now() };\n    return sessions[userId];\n}`,
+      typescript: `const sessions: Record<string, {token:string;since:number}> = {};\nasync function handleAccess(userId: string, token: string) {\n    if (sessions[userId]) {\n        await new Promise(r => setTimeout(r, 100));\n        delete sessions[userId];\n    }\n    sessions[userId] = { token, since: Date.now() };\n    return sessions[userId];\n}`,
+      python: `import asyncio, time\nsessions = {}\nasync def handle_access(user_id, token):\n    if user_id in sessions:\n        await asyncio.sleep(0.1)\n        del sessions[user_id]\n    sessions[user_id] = {'token': token, 'since': time.time()}\n    return sessions[user_id]`,
+      cpp: `#include <unordered_map>\n#include <string>\n#include <chrono>\n#include <thread>\nusing namespace std;\n\nunordered_map<string,string> sessions;\nvoid handle_access(string userId, string token) {\n    if (sessions.count(userId)) {\n        this_thread::sleep_for(chrono::milliseconds(100));\n        sessions.erase(userId);\n    }\n    sessions[userId] = token;\n}`,
+      java: `import java.util.concurrent.ConcurrentHashMap;\n\npublic class SessionManager {\n    private static ConcurrentHashMap<String,String> sessions = new ConcurrentHashMap<>();\n    public static String handleAccess(String userId, String token) throws InterruptedException {\n        if (sessions.containsKey(userId)) {\n            Thread.sleep(100);\n            sessions.remove(userId);\n        }\n        sessions.put(userId, token);\n        return sessions.get(userId);\n    }\n}`,
+      go: `package main\nimport \"time\"\nvar sessions = make(map[string]string)\nfunc HandleAccess(userId, token string) {\n    time.Sleep(100 * time.Millisecond)\n    sessions[userId] = token\n}`,
+      sql: `SELECT * FROM user_sessions WHERE user_id = 1 FOR UPDATE;`
+    } : {
+      javascript: `// DSA Sandbox\nfunction solve(arr) {\n    // TODO: implement your solution\n    return [];\n}`,
+      typescript: `function solve(arr: number[]): number[] {\n    // TODO: implement your solution\n    return [];\n}`,
+      python: `# DSA Sandbox\ndef solve(arr: list[int]) -> list[int]:\n    # TODO: implement your solution\n    return []`,
+      cpp: `#include <vector>\nusing namespace std;\n\nvector<int> solve(vector<int>& arr) {\n    // TODO: implement your solution\n    return {};\n}`,
+      java: `import java.util.*;\n\npublic class Solution {\n    public List<Integer> solve(int[] arr) {\n        // TODO: implement your solution\n        return new ArrayList<>();\n    }\n}`,
+      go: `package main\n\nfunc solve(arr []int) []int {\n    // TODO: implement your solution\n    return []int{}\n}`,
+      sql: `-- Write your SQL query here\nSELECT * FROM table_name WHERE condition;`
+    }
+
+    // DB templates override client fallbacks where available
+    return { ...fallback, ...db }
+  }, [interview])
+
   const handleLanguageChange = (newLang: string) => {
     setEditorLanguage(newLang)
-    
-    // Swap template code if it exists for the new language
-    const templates = interview.agenda?.[0]?.templates
-    if (templates && templates[newLang]) {
-      // If the code has been edited by the user, confirm before overwriting
-      if (!isDirty || confirm(`Switching to ${newLang} will replace your current workspace code with the default template. Do you want to continue?`)) {
-        setCodeContent(templates[newLang])
-        setIsDirty(false)
+    const template = defaultTemplates[newLang as keyof typeof defaultTemplates]
+    if (template) {
+      // Only ask confirmation if user has written custom code
+      if (!isDirty) {
+        setCodeContent(template)
+      } else {
+        const confirmed = window.confirm(`Switch to ${newLang === 'cpp' ? 'C++' : newLang}? Your current code will be replaced with the starter template.`)
+        if (confirmed) {
+          setCodeContent(template)
+          setIsDirty(false)
+        }
       }
     }
   }
