@@ -1,23 +1,27 @@
-# Interview OS 🚀
-> **The Dynamic AI Technical Mock Interview Platform**
+# Interview OS
+> **AI Technical Mock Interview Platform**
 
-Interview OS is an interactive mock interview platform designed to simulate realistic technical screening rounds with Principal/Senior Software Engineers. Instead of generic quiz templates or static LeetCode lists, Interview OS leverages your resume, GitHub projects, and target role to dynamically generate customized, deep-dive grilling coding sessions in Monaco.
+Interview OS is an interactive mock interview platform designed to simulate realistic technical screening rounds with Principal and Senior Software Engineers. Instead of generic quiz templates or static question lists, Interview OS leverages candidate resumes, GitHub projects, and target roles to dynamically generate customized, deep-dive coding sessions in a Monaco editor workspace.
+
+## Live Demo
+
+The production environment is live at: [https://interview-os-brown.vercel.app](https://interview-os-brown.vercel.app)
 
 ---
 
-## 🏗️ System Architecture
+## System Architecture
 
-The following diagram illustrates the workflow of the onboarding profile syncing, dynamic session initiation, and real-time streaming loop:
+The following diagram illustrates the workflow of onboarding profile syncing, dynamic session initiation, and the real-time streaming loop:
 
 ```mermaid
 graph TD
-    subgraph Onboarding ["1. Onboarding & Sync"]
+    subgraph Onboarding ["1. Onboarding and Sync"]
         A[User Input / Resume Upload] -->|POST /api/profile/sync| B[API Profile Syncer]
         B -->|AI Profile Abstract Synthesis| C[(Supabase DB)]
     end
 
     subgraph SessionInit ["2. Interview Session Initiation"]
-        D[User Clicks 'New Interview'] -->|POST /api/interviews/initiate| E[API Session Initializer]
+        D[User Clicks New Interview] -->|POST /api/interviews/initiate| E[API Session Initializer]
         C -->|Read User Profile Skills/Repos| E
         E -->|Invoke OpenRouter API| F[AI Question Architect]
         F -->|Return Custom Code Skeleton & Agenda| E
@@ -35,7 +39,7 @@ graph TD
 
 ### Edge Stream Workflow (Low-Latency Execution)
 
-Interview OS utilizes a custom Edge runtime stream reader that decouples output processing from database logging. This eliminates client input lockups and guarantees immediate TCP pipeline closures:
+Interview OS utilizes a custom Edge runtime stream reader that decouples output processing from database logging. This eliminates client input lockups and guarantees immediate TCP connection closures:
 
 ```mermaid
 sequenceDiagram
@@ -57,20 +61,20 @@ sequenceDiagram
 
 ---
 
-## 🌟 Key Features
+## Key Features
 
-*   **Four Comprehensive Mock Focus Tracks:**
-    *   **Live PR Critique:** The AI reads your tech stack, generates a realistic buggy codebase (e.g. Go channels race condition, Python thread locks, JS event loops) and acts as a code reviewer.
-    *   **CS Fundamentals & System Design:** Focuses on low-level class design (OOP), cache replacement logic (LRU), network sockets (TCP/UDP), and OS threads.
-    *   **General DSA Sandbox:** Practice classic algorithms formatted in your target language.
-    *   **Resume & Projects Grill:** Tailored specifically to ask questions about projects and tech stacks parsed from your uploaded resume.
-*   **Dynamic Agenda Tracker:** Guides candidates through distinct phases (Conceptual Walkthrough -> Coding -> Edge Cases & Review) in real time.
-*   **Interactive Monaco Sandbox:** Write and refactor code directly inside a live code editor matching your target track.
+*   **Four Specialized Mock Focus Tracks:**
+    *   **Live PR Critique:** The AI reads the candidate's tech stack, generates a realistic buggy codebase (such as Go channels race conditions, Python thread locks, or JavaScript event loop errors) and acts as a senior reviewer.
+    *   **CS Fundamentals and System Design:** Focuses on low-level class design (OOP), cache replacement logic (LRU), network sockets (TCP/UDP), and OS threads.
+    *   **General DSA Sandbox:** Practice classic algorithms formatted in the candidate's chosen language (JavaScript, TypeScript, Python, C++, Java, Go, SQL).
+    *   **Resume and Projects Grill:** Tailored specifically to ask questions about projects and tech stacks parsed from the candidate's uploaded resume.
+*   **Dynamic Agenda Tracker:** Guides candidates through distinct phases (Conceptual Walkthrough, Coding implementation, and Edge Cases / Review) in real time.
+*   **Interactive Monaco Sandbox:** Write and refactor code directly inside a live code editor matching the target track.
 *   **Seamless Supabase Integration:** Secure database logging, row-level security (RLS) policies, and profile syncs.
 
 ---
 
-## 🛠️ Tech Stack
+## Tech Stack
 
 *   **Framework:** Next.js 16 (App Router, Edge Runtime API Routes)
 *   **Database:** Supabase (PostgreSQL client, `@supabase/ssr` server-side cookies, Row Level Security)
@@ -81,13 +85,13 @@ sequenceDiagram
 
 ---
 
-## 🚀 Getting Started
+## Getting Started
 
 ### 1. Prerequisites
-Ensure you have [Node.js](https://nodejs.org/) installed on your machine.
+Ensure you have Node.js installed on your machine.
 
 ### 2. Database Schema Setup
-Execute the DDL schema inside [supabase/schema.sql](file:///d:/AI%20Interviewer/supabase/schema.sql) in your Supabase SQL Editor. This sets up the target tables (`users`, `user_profiles`, `interviews`, `interview_messages`) and configures Row Level Security (RLS).
+Execute the DDL schema inside `supabase/schema.sql` in your Supabase SQL Editor. This sets up the target tables (`users`, `user_profiles`, `interviews`, `interview_messages`) and configures Row Level Security (RLS).
 
 ### 3. Environment Variables Configuration
 Create a `.env.local` file in the root directory and configure the following variables:
@@ -108,5 +112,5 @@ Open [http://localhost:3000](http://localhost:3000) to view the application.
 
 ---
 
-## 📄 License
+## License
 This project is licensed under the MIT License.
