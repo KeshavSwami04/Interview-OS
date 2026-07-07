@@ -106,10 +106,11 @@ export async function POST(request: Request) {
 
         Task details:
         - Select the programming language most appropriate for their skills list.
-
         - Provide initial skeleton code (with flawed/placeholder blocks for them to fix or implement).
+        - IMPORTANT: Do NOT place code comments (like // Expected: value) inside or before closing parentheses/brackets/semicolons on the same line, as this comments them out and causes syntax/compile errors. Always place comments at the very end of the line (e.g. use 'console.log(func(arg)); // Expected: val').
         - Outline a 3-stage agenda (concept walkthrough, implementation, review/edge cases).
         - Write a friendly, detailed welcoming question introducing the challenge topic and asking the first conceptual question.
+
 
         Return ONLY a raw JSON object matching this schema exactly (do not output any other text or markdown code blocks):
         {
