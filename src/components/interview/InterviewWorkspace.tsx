@@ -35,10 +35,26 @@ export default function InterviewWorkspace({ interview, initialMessages }: Inter
     `// Connected repository workspace\n// Choose a language and write your refactoring below\n\nfunction processData(input) {\n    // Spot the architectural or safety flaws here...\n    return input;\n}`
   )
   const [editorLanguage, setEditorLanguage] = useState('javascript')
+  const [isDirty, setIsDirty] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [isConcluding, setIsConcluding] = useState(false)
   const [hintText, setHintText] = useState<string | null>(null)
   const [loadingHint, setLoadingHint] = useState(false)
+
+  const handleLanguageChange = (newLang: string) => {
+    setEditorLanguage(newLang)
+    
+    // Swap template code if it exists for the new language
+    const templates = interview.agenda?.[0]?.templates
+    if (templates && templates[newLang]) {
+      // If the code has been edited by the user, confirm before overwriting
+      if (!isDirty || confirm(`Switching to ${newLang} will replace your current workspace code with the default template. Do you want to continue?`)) {
+        setCodeContent(templates[newLang])
+        setIsDirty(false)
+      }
+    }
+  }
+
 
   // Voice Dictation (Client-Side HTML5 SpeechRecognition)
   const [isListening, setIsListening] = useState(false)
@@ -331,7 +347,7 @@ export default function InterviewWorkspace({ interview, initialMessages }: Inter
             </span>
             <select
               value={editorLanguage}
-              onChange={(e) => setEditorLanguage(e.target.value)}
+              onChange={(e) => handleLanguageChange(e.target.value)}
               className="py-1 px-2.5 bg-[#0A0A0A] border border-[#262626] text-white text-[10px] rounded focus:outline-none focus:border-[#0066FF]"
             >
               <option value="javascript">JavaScript</option>
@@ -353,7 +369,11 @@ export default function InterviewWorkspace({ interview, initialMessages }: Inter
               language={editorLanguage}
               theme="vs-dark"
               value={codeContent}
-              onChange={(value) => setCodeContent(value || '')}
+              onChange={(value) => {
+                setCodeContent(value || '')
+                setIsDirty(true)
+              }}
+
               options={{
                 minimap: { enabled: false },
                 fontSize: 13,
