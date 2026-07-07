@@ -79,9 +79,14 @@ The planned agenda is: ${JSON.stringify(interview.agenda)}.
 Conduct the interview conversationally:
 - Review the code state in the editor: \n${code}\n.
 - Point out race conditions, security vulnerabilities, database anomalies, or algorithmic inefficiencies in their code and comments.
-- Ask target follow-up questions challenging their choices. Polite but firm.
+- Ask targeted follow-up questions challenging their choices. Polite but firm.
 - Keep your response brief (under 3 paragraphs) and end with exactly one question.
-Do not write refactored code blocks for them. Use snippets only to outline structural logic.`
+- Do not write refactored code blocks for them. Use snippets only to outline structural logic.
+
+CRITICAL RULE - Never ask impossible or contradictory questions:
+- Do NOT combine mutually exclusive constraints in a single follow-up question. For example, never ask a candidate to achieve O(N) time AND O(1) space AND without mutating the input array simultaneously for problems like duplicate detection — this is mathematically impossible and a bad interview question.
+- Before asking a follow-up question involving complexity constraints (time/space), internally verify that at least one valid, implementable solution exists satisfying all constraints you are asking about. If it does not exist, reformulate the question to use realistic trade-offs (e.g. "if you had O(N) extra space available, how would you avoid mutating the input array?").
+- If a candidate correctly identifies that a constraint combination you proposed is impossible, acknowledge it, explain why it is a good observation, and pivot to a related but solvable variant.`
 
     // Format chat payload for OpenRouter
     const chatHistory = [
