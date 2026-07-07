@@ -97,7 +97,11 @@ export async function POST(request: Request) {
           templates: fallbackTemplates
         }
       ]
-      initialQuestion = `Hello. Let's do a live PR critique on your repository: "${repoName}". I've pulled a core connection function shown on the right.\n\nIf two clients call handleUserAccess concurrently for the same userId, we have a race condition due to the asynchronous timeout block. Explain how this race condition manifests, and refactor the script in the Monaco editor to guarantee concurrency safety.`
+      initialQuestion = `Hi, I'm Aditya Kumar, Senior Engineer at Atlassian. Good to meet you. We have about 45 minutes today.
+
+I've pulled a snippet from your repository "${repoName}" — it's a session management module that handles concurrent user access. Take 60 seconds to read through the code on the right.
+
+I want you to walk me through what this function does, and then tell me: if two simultaneous requests arrive for the same userId at the exact same millisecond, what happens? Think aloud — I want to hear your reasoning before you start any refactoring.`
     } else if (type === 'CS Fundamentals & System Design') {
       const fallbackTemplates = getFallbackTemplates(type, '')
       agenda = [
@@ -109,7 +113,11 @@ export async function POST(request: Request) {
           templates: fallbackTemplates
         }
       ]
-      initialQuestion = `Hello. Let's do a CS Fundamentals & System Design interview. Look at the LRU Cache template in the editor on the right.\n\nExplain how you can design an LRU Cache to guarantee O(1) runtime complexity for both read (get) and write (put) operations. What underlying data structures (such as Doubly Linked List, Hash Map) are needed, and how do you ensure thread-safety and avoid race conditions under concurrent workloads?`
+      initialQuestion = `Hi, I'm Vikram Patel, SDE-3 at Microsoft. Thanks for joining — we have roughly 45 minutes.
+
+We're going to work through a design problem today. Take a look at the skeleton on the right. I want to design a data structure that supports two operations — get(key) and put(key, value) — both in O(1) time, with a fixed capacity that evicts the least recently used entry when full.
+
+Before you touch any code: walk me through your high-level approach. Which data structures are you thinking about, and why? I want your reasoning first.`
     } else {
       const fallbackTemplates = getFallbackTemplates(type, '')
       // General DSA Mock / Resume Mock fallback
@@ -122,7 +130,11 @@ export async function POST(request: Request) {
           templates: fallbackTemplates
         }
       ]
-      initialQuestion = `Welcome. We're going to cover typical algorithms and system constraints. Take a look at the duplicate lookup function in the editor on the right.\n\nExplain how you can solve this duplicate array numbers lookup with O(N) runtime complexity and O(1) helper space if numbers are bounded between 1 and n.`
+      initialQuestion = `Hi, I'm Ankit Verma, SDE-2 at Amazon. Good to have you here — we've got about 45 minutes, so let's get into it.
+
+I have a problem for you. Look at the function stub on the right. Given an array of integers where every element appears twice except for one, you need to find that single non-duplicate element. Your solution needs to run in O(N) time.
+
+Take your time, read the problem. Tell me: what's your initial instinct for how to approach this? Don't jump to code yet — I want to hear your thought process first.`
     }
 
 
@@ -153,7 +165,8 @@ export async function POST(request: Request) {
         - Provide initial skeleton code templates translated into JavaScript, TypeScript, Python, C++, Java, Go, and SQL (if applicable) matching the same problem signatures.
         - IMPORTANT: Do NOT place code comments (like // Expected: value) inside or before closing parentheses/brackets/semicolons on the same line, as this comments them out and causes syntax/compile errors. Always place comments at the very end of the line (e.g. use 'console.log(func(arg)); // Expected: val').
         - Outline a 3-stage agenda (concept walkthrough, implementation, review/edge cases).
-        - Write a friendly, detailed welcoming question introducing the challenge topic and asking the first conceptual question.
+        - Write the "initialQuestion" as an immersive, realistic interview opening. It MUST: (1) introduce a named interviewer and their company/title relevant to the round type and difficulty, (2) mention that the session is approximately 45 minutes, (3) describe the problem naturally as a real engineer would explain it verbally (not as a numbered list of constraints), (4) end by asking the candidate for their initial high-level approach — NOT to start coding yet. Make it feel like the first 2 minutes of a real video call interview, not a quiz prompt.
+
 
 
         Return ONLY a raw JSON object matching this schema exactly (do not output any other text or markdown code blocks):
