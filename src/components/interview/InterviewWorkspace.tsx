@@ -337,9 +337,12 @@ export default function InterviewWorkspace({ interview, initialMessages }: Inter
               <option value="javascript">JavaScript</option>
               <option value="typescript">TypeScript</option>
               <option value="python">Python</option>
+              <option value="cpp">C++</option>
+              <option value="java">Java</option>
               <option value="go">Go</option>
               <option value="sql">SQL</option>
             </select>
+
           </div>
 
           {/* Monaco Editor Component instance */}

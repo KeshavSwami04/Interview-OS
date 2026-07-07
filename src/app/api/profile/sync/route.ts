@@ -19,8 +19,9 @@ export async function POST(request: Request) {
     const defaultSkills = role.toLowerCase().includes('frontend') 
       ? ['React', 'TypeScript', 'TailwindCSS', 'Next.js', 'CSS Grid', 'Framer Motion']
       : role.toLowerCase().includes('backend')
-      ? ['Node.js', 'TypeScript', 'PostgreSQL', 'Redis', 'Express', 'System Design']
-      : ['React', 'Node.js', 'TypeScript', 'PostgreSQL', 'TailwindCSS', 'Next.js']
+      ? ['Node.js', 'TypeScript', 'PostgreSQL', 'Redis', 'Express', 'System Design', 'C++', 'Java']
+      : ['React', 'Node.js', 'TypeScript', 'PostgreSQL', 'C++', 'Java', 'Algorithms']
+
 
     const profileSummary = {
       resumeName: resumeName || 'Uploaded Resume',
