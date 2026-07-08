@@ -76,10 +76,11 @@ ${code}
 YOUR TASK:
 Act as the compiler/interpreter. Simulate executing this code.
 1. Check for syntax errors, compile-time type mismatches, or missing imports/headers.
-2. If there are syntax or compiler errors, return status = "compile_error" with a realistic stack trace/error log.
-3. If it compiles successfully but crashes (e.g. division by zero, null pointer dereference, index out of bounds), return status = "runtime_error" with the trace logs.
-4. If it compiles and runs, simulate execution on typical test cases (including some boundary inputs). Show standard output (stdout) and test assertion results.
-5. If the solution is logically incorrect (fails assertions), return status = "success" but show failed test cases in output.
+2. IMPORTANT: Do NOT require a 'main' function or complete executable wrapper program. The sandbox environment wraps the candidate's classes/functions in a test harness automatically. Do NOT return compile errors for a missing 'main' function.
+3. If there are actual syntax or compiler errors, return status = "compile_error" with a realistic stack trace/error log.
+4. If it compiles successfully but crashes (e.g. division by zero, null pointer dereference, index out of bounds), return status = "runtime_error" with the trace logs.
+5. If it compiles and runs, simulate execution on typical test cases (including some boundary inputs). Show standard output (stdout) and test assertion results.
+6. If the solution is logically incorrect (fails assertions), return status = "success" but show failed test cases in output.
 
 You MUST return ONLY a raw JSON object matching this schema exactly (no other text, no markdown blocks):
 {
@@ -97,7 +98,7 @@ You MUST return ONLY a raw JSON object matching this schema exactly (no other te
         'X-Title': 'Interview OS',
       },
       body: JSON.stringify({
-        model: 'openrouter/free',
+        model: 'google/gemini-2.5-flash:free',
         messages: [{ role: 'user', content: compilerPrompt }],
         response_format: { type: 'json_object' },
         temperature: 0.1

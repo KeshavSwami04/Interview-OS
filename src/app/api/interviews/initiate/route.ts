@@ -384,7 +384,7 @@ Return ONLY a raw JSON object:
             'X-Title': 'Interview OS',
           },
           body: JSON.stringify({
-            model: 'openrouter/free',
+            model: 'google/gemini-2.5-flash:free',
             messages: [{ role: 'user', content: generatorPrompt }],
             response_format: { type: 'json_object' },
             temperature: 0.7
