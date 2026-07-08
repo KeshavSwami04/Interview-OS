@@ -7,17 +7,15 @@ export default function Home() {
       {/* Navigation */}
       <header className="w-full max-w-7xl mx-auto px-6 py-6 flex items-center justify-between border-b border-[#121212]">
         <div className="flex items-center gap-2">
-          <svg className="h-7 w-7" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <defs>
-              <linearGradient id="logoGrad" x1="0" y1="0" x2="100" y2="100" gradientUnits="userSpaceOnUse">
-                <stop offset="0%" stopColor="#0066FF" />
-                <stop offset="100%" stopColor="#00F5FF" />
-              </linearGradient>
-            </defs>
-            <circle cx="50" cy="50" r="40" stroke="url(#logoGrad)" strokeWidth="8" strokeLinecap="round" strokeDasharray="180 60" />
-            <path d="M50 30 V70" stroke="url(#logoGrad)" strokeWidth="10" strokeLinecap="round" />
-            <circle cx="50" cy="18" r="4" fill="#FFFFFF" />
-          </svg>
+            <svg className="h-7 w-7" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <rect width="32" height="32" rx="7" fill="#111111"/>
+              <path d="M7 11L13 16L7 21" stroke="url(#lg1)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
+              <rect x="16" y="19.5" width="9" height="2.5" rx="1.25" fill="url(#lg2)"/>
+              <defs>
+                <linearGradient id="lg1" x1="7" y1="11" x2="13" y2="21" gradientUnits="userSpaceOnUse"><stop stopColor="#0066FF"/><stop offset="1" stopColor="#00DDFF"/></linearGradient>
+                <linearGradient id="lg2" x1="16" y1="20" x2="25" y2="22" gradientUnits="userSpaceOnUse"><stop stopColor="#0066FF"/><stop offset="1" stopColor="#00DDFF"/></linearGradient>
+              </defs>
+            </svg>
 
 
           <span className="font-semibold tracking-tight text-white text-lg">Interview OS</span>

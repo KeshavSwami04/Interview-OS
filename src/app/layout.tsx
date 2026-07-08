@@ -15,6 +15,18 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "Interview OS | AI Technical Mock Interview Platform",
   description: "Interactive mock coding interview workspace simulating realistic technical screening rounds with Principal/Senior Software Engineers.",
+  icons: {
+    icon: [
+      { url: '/favicon.svg', type: 'image/svg+xml' },
+    ],
+    shortcut: '/favicon.svg',
+    apple: '/favicon.svg',
+  },
+  openGraph: {
+    title: "Interview OS",
+    description: "AI Technical Mock Interview Platform",
+    type: "website",
+  },
 };
 
 

@@ -205,16 +205,14 @@ export default function OnboardingPage() {
       {/* Sidebar Onboarding Progress */}
       <div className="hidden md:flex flex-col w-80 border-r border-[#1F1F1F] bg-[#0E0E0E] p-8 space-y-8">
         <div className="flex items-center gap-2">
-          <svg className="h-6 w-6" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <svg className="h-6 w-6" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <rect width="32" height="32" rx="7" fill="#111111"/>
+            <path d="M7 11L13 16L7 21" stroke="url(#lgO1)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
+            <rect x="16" y="19.5" width="9" height="2.5" rx="1.25" fill="url(#lgO2)"/>
             <defs>
-              <linearGradient id="logoGradOnboarding" x1="0" y1="0" x2="100" y2="100" gradientUnits="userSpaceOnUse">
-                <stop offset="0%" stopColor="#0066FF" />
-                <stop offset="100%" stopColor="#00F5FF" />
-              </linearGradient>
+              <linearGradient id="lgO1" x1="7" y1="11" x2="13" y2="21" gradientUnits="userSpaceOnUse"><stop stopColor="#0066FF"/><stop offset="1" stopColor="#00DDFF"/></linearGradient>
+              <linearGradient id="lgO2" x1="16" y1="20" x2="25" y2="22" gradientUnits="userSpaceOnUse"><stop stopColor="#0066FF"/><stop offset="1" stopColor="#00DDFF"/></linearGradient>
             </defs>
-            <circle cx="50" cy="50" r="40" stroke="url(#logoGradOnboarding)" strokeWidth="8" strokeLinecap="round" strokeDasharray="180 60" />
-            <path d="M50 30 V70" stroke="url(#logoGradOnboarding)" strokeWidth="10" strokeLinecap="round" />
-            <circle cx="50" cy="18" r="4" fill="#FFFFFF" />
           </svg>
 
 
