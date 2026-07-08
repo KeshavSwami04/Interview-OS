@@ -1,12 +1,12 @@
 export async function getOpenRouterStream(messages: any[]) {
   const apiKey = process.env.OPENROUTER_API_KEY
   
-  // Return a mock stream if the OpenRouter key is not yet set
-  if (!apiKey || apiKey.includes('sk-or-v1-...')) {
+  // Return a mock stream if the OpenRouter key is not yet set or is a template placeholder
+  if (!apiKey || !apiKey.startsWith('sk-or-') || apiKey.includes('sk-or-v1-...')) {
     const encoder = new TextEncoder()
     return new ReadableStream({
       async start(controller) {
-        const mockText = "I see your code submission. (Note: Please set a valid OPENROUTER_API_KEY in your .env.local file to connect to real LLM engines). Let's review the concurrency loop: how can we serialize access to avoid this asynchronous race condition?"
+        const mockText = "I see your response. (Note: Please set a valid OPENROUTER_API_KEY starting with 'sk-or-' in your Vercel/local environment to connect to real LLM engines). Let's continue our behavioral walkthrough: tell me about a time you handled a disagreement with a team member."
         for (let i = 0; i < mockText.length; i += 5) {
           controller.enqueue(encoder.encode(mockText.slice(i, i + 5)))
           await new Promise(resolve => setTimeout(resolve, 30))
@@ -25,7 +25,7 @@ export async function getOpenRouterStream(messages: any[]) {
       'X-Title': 'Interview OS',
     },
     body: JSON.stringify({
-      model: 'google/gemini-2.0-flash-exp:free',
+      model: 'meta-llama/llama-3-8b-instruct',
       messages,
       stream: true,
     }),
