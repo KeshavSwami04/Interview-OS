@@ -195,12 +195,20 @@ CRITICAL: Never pose impossible constraint combinations (e.g., O(N) time + O(1) 
     // Format chat payload for OpenRouter
     const chatHistory = [
       { role: 'system', content: systemPrompt },
-      ...(messages || []).map((m: any) => ({
-        role: m.sender === 'interviewer' ? 'assistant' : 'user',
-        content: m.code_submission 
-          ? `Code context in editor:\n${m.code_submission}\n\nCandidate response:\n${m.message_text}`
-          : m.message_text
-      }))
+      ...(messages || []).map((m: any) => {
+        const isCodingRound = interview.type === 'DSA Sandbox' || interview.type === 'Live PR Critique';
+        const hasCode = m.code_submission && m.code_submission.trim();
+        
+        let contentStr = m.message_text;
+        if (m.sender === 'candidate' && isCodingRound && hasCode) {
+          contentStr = `[Active Editor Code State]:\n\`\`\`\n${m.code_submission}\n\`\`\`\n\nCandidate Response:\n${m.message_text}`;
+        }
+        
+        return {
+          role: m.sender === 'interviewer' ? 'assistant' : 'user',
+          content: contentStr
+        };
+      })
     ]
 
     // 5. OpenRouter streaming completions
