@@ -1,0 +1,314 @@
+{
+  "info": {
+    "_postman_id": "a90df18d-6d5b-42fa-b72e-3c2ad2d525fa",
+    "name": "AI Interviewer API",
+    "description": "Postman Collection for the Next.js API endpoints of the AI Interviewer platform. This collection includes routes for user profile synchronization, mock interview initiation, live streaming chat, code compilation sandboxing, custom hints generation, and final performance evaluation.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Profile",
+      "item": [
+        {
+          "name": "Sync Profile",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Cookie",
+                "value": "{{supabaseCookie}}",
+                "type": "text",
+                "description": "Supabase authentication session cookies (sb-access-token and sb-refresh-token)"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"role\": \"Frontend Engineer\",\n  \"difficulty\": \"medium\",\n  \"resumeUrl\": \"https://example.com/resume.pdf\",\n  \"resumeName\": \"john_doe_resume.pdf\",\n  \"githubUsername\": \"johndoe\",\n  \"selectedRepos\": [\n    \"https://github.com/johndoe/my-react-app\"\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/profile/sync",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "profile",
+                "sync"
+              ]
+            },
+            "description": "Synchronizes candidate's profile information (target role, difficulty, resume URL/name, and GitHub repositories to analyze) to the public database schema, generating default skills and metadata summaries."
+          },
+          "response": []
+        }
+      ],
+      "description": "Endpoints managing the user's profile metadata and resume/GitHub synchronization."
+    },
+    {
+      "name": "Interviews",
+      "item": [
+        {
+          "name": "Initiate Interview",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Cookie",
+                "value": "{{supabaseCookie}}",
+                "type": "text",
+                "description": "Supabase authentication session cookies"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"role\": \"Frontend Engineer\",\n  \"difficulty\": \"medium\",\n  \"type\": \"DSA Sandbox\",\n  \"repoUrl\": \"https://github.com/johndoe/my-react-app\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/interviews/initiate",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "interviews",
+                "initiate"
+              ]
+            },
+            "description": "Initiates a new mock interview session by setting up standard interview agendas (milestones) based on track types, calling OpenRouter (if API key is configured) to generate custom questions, and inserting the initial question in the database."
+          },
+          "response": []
+        },
+        {
+          "name": "Interview Chat (Stream)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Cookie",
+                "value": "{{supabaseCookie}}",
+                "type": "text",
+                "description": "Supabase authentication session cookies"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"messageText\": \"I think a sliding window approach works best here since we want O(N) complexity.\",\n  \"code\": \"function findDuplicate(arr) {\\n  // editor code state\\n}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/interviews/:id/chat",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "interviews",
+                ":id",
+                "chat"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "",
+                  "description": "The unique UUID of the interview session."
+                }
+              ]
+            },
+            "description": "Logs the candidate's chat response and code state, reads full message history, loads AI interviewer persona based on track & difficulty, and initiates an OpenRouter server-sent event (SSE) stream back to the candidate."
+          },
+          "response": []
+        },
+        {
+          "name": "Run Code Sandbox",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Cookie",
+                "value": "{{supabaseCookie}}",
+                "type": "text",
+                "description": "Supabase authentication session cookies"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"code\": \"function findDuplicate(arr) {\\n  return arr[0];\\n}\",\n  \"language\": \"javascript\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/interviews/:id/run",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "interviews",
+                ":id",
+                "run"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "",
+                  "description": "The unique UUID of the interview session."
+                }
+              ]
+            },
+            "description": "Compiles and runs the candidate's code in a virtual compilation sandbox using OpenRouter AI. It parses stack traces, outputs, assertions, and returns execution results."
+          },
+          "response": []
+        },
+        {
+          "name": "Get Hint",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Cookie",
+                "value": "{{supabaseCookie}}",
+                "type": "text",
+                "description": "Supabase authentication session cookies"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"chatHistory\": [\n    {\n      \"sender\": \"interviewer\",\n      \"message_text\": \"Good to meet you. I want you to walk me through finding a duplicate number.\"\n    },\n    {\n      \"sender\": \"candidate\",\n      \"message_text\": \"Should I write the brute force code first?\"\n    }\n  ],\n  \"codeState\": \"function findDuplicate(arr) {\\n  \\n}\",\n  \"interviewContext\": {\n    \"title\": \"Frontend Mock (DSA Sandbox)\",\n    \"type\": \"DSA Sandbox\",\n    \"role\": \"Frontend Engineer\",\n    \"difficulty\": \"medium\",\n    \"agenda\": [\n      {\n        \"stage\": 1,\n        \"topic\": \"General Algorithmic Logic\",\n        \"coreIntent\": \"Verify clean loops and complexity bounds\"\n      }\n    ],\n    \"currentLanguage\": \"javascript\"\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/interviews/:id/hint",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "interviews",
+                ":id",
+                "hint"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "",
+                  "description": "The unique UUID of the interview session."
+                }
+              ]
+            },
+            "description": "Generates a subtle, targeted conceptual tip/nudge (1-2 sentences) from a virtual Principal Engineer based on the current conversation transcript and code state without giving away the final solution."
+          },
+          "response": []
+        },
+        {
+          "name": "Conclude Interview",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Cookie",
+                "value": "{{supabaseCookie}}",
+                "type": "text",
+                "description": "Supabase authentication session cookies"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/interviews/:id/conclude",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "interviews",
+                ":id",
+                "conclude"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "",
+                  "description": "The unique UUID of the interview session."
+                }
+              ]
+            },
+            "description": "Concludes the interview session, evaluates candidate responses/code submissions, computes calibrated scoring across overall, communication, problemSolving, and technical competencies, generates a personalized roadmap with learning resources, and saves result data to Supabase."
+          },
+          "response": []
+        }
+      ],
+      "description": "Endpoints managing mock interview session lifecycles, chat streams, sandbox execution, hints, and feedback generation."
+    }
+  ],
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:3000",
+      "type": "string",
+      "description": "The host URL of the running Next.js application server."
+    },
+    {
+      "key": "supabaseCookie",
+      "value": "sb-access-token=your-token; sb-refresh-token=your-token",
+      "type": "string",
+      "description": "Replace with the actual cookies from your Supabase auth session to authenticate API requests."
+    }
+  ]
+}
