@@ -111,7 +111,7 @@ export async function POST(
 PARTICIPATION METRICS (computed from transcript):
 - Total candidate responses: ${candidateMessages.length} (out of ${interviewerMessages.length} interviewer questions)
 - Total words written by candidate: ${totalCandidateWords}
-- Did the candidate write meaningful code (>30 chars): ${hasCodeSubmission ? 'YES' : 'NO — penalize technical score heavily'}
+- Did the candidate write meaningful code (>30 chars): ${interview.type === 'DSA Sandbox' || interview.type === 'Live PR Critique' ? (hasCodeSubmission ? 'YES' : 'NO — penalize technical score heavily') : 'N/A (Code not expected for this interview type)'}
 - Did the candidate give substantive answers (>20 words per answer): ${hasSubstantiveAnswers ? 'YES' : 'NO — penalize communication score heavily'}
 - Interview type: ${interview.type}
 - Interview difficulty: ${interview.difficulty}
@@ -121,16 +121,16 @@ FULL TRANSCRIPT:
 ${JSON.stringify(messages.map((m: any) => ({ sender: m.sender, text: m.message_text, code: m.code_submission })))}
 
 SCORING RUBRIC — apply these STRICTLY:
-- 90-100: Exceptional. Candidate answered all questions correctly, wrote clean working code, explained complexity, handled edge cases, and showed depth.
-- 75-89: Strong. Answered most questions correctly with minor gaps. Code works but has some issues.
-- 60-74: Adequate. Got the general approach but made notable mistakes. Code is partial or has bugs.
-- 40-59: Weak. Struggled significantly. Answered only 1-2 questions superficially. Code is mostly stubs.
-- 20-39: Very poor. Barely participated. Answered nothing meaningfully. Code untouched or trivially wrong.
-- 0-19: Did not participate. Candidate gave no real answers and submitted no code.
+- 90-100: Exceptional. Candidate answered all questions correctly, explained complexity, handled edge cases, and showed depth. (If DSA Sandbox or Live PR Critique: also wrote clean working code).
+- 75-89: Strong. Answered most questions correctly with minor gaps. (If DSA Sandbox or Live PR Critique: code works but has some issues).
+- 60-74: Adequate. Got the general approach but made notable mistakes. (If DSA Sandbox or Live PR Critique: code is partial or has bugs).
+- 40-59: Weak. Struggled significantly. Answered only 1-2 questions superficially.
+- 20-39: Very poor. Barely participated. Answered nothing meaningfully.
+- 0-19: Did not participate. Candidate gave no real answers and submitted no code (if coding was required).
 
 PENALTIES (apply these before scoring):
 - If candidate wrote fewer than 2 substantive responses: subtract 30 from all scores.
-- If no meaningful code was submitted: cap technical score at 45.
+- If no meaningful code was submitted (ONLY applicable to DSA Sandbox and Live PR Critique): cap technical score at 45.
 - If candidate answered 0 or 1 questions: overall score MUST be below 50.
 - If total candidate words < 50: overall score MUST be below 40.
 - Never give an overall score above 60 if the candidate quit early or barely engaged.
@@ -280,8 +280,8 @@ Return ONLY a JSON object:
         scorecard.technical     = clamp(scorecard.technical, 0, 45)
       }
 
-      if (!hasCodeSubmission) {
-        // No meaningful code written — cap technical regardless
+      if (!hasCodeSubmission && (interview.type === 'DSA Sandbox' || interview.type === 'Live PR Critique')) {
+        // No meaningful code written — cap technical regardless (only for coding rounds)
         scorecard.technical = clamp(scorecard.technical, 0, 45)
       }
 
