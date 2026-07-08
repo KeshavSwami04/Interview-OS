@@ -4,21 +4,32 @@ export async function POST(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await params
+  let chatHistory: any[] = []
+  let codeState = ''
+  let interviewContext: any = null
+
   try {
-    const { id } = await params
-    const { chatHistory, codeState, interviewContext } = await request.json()
-    const apiKey = process.env.OPENROUTER_API_KEY
+    const body = await request.json()
+    chatHistory = body.chatHistory || []
+    codeState = body.codeState || ''
+    interviewContext = body.interviewContext || {}
+  } catch (e) {
+    console.error('Failed to parse hint body:', e)
+  }
 
-    const {
-      title = 'Technical Challenge',
-      type = 'DSA Sandbox',
-      role = 'Software Engineer',
-      difficulty = 'medium',
-      agenda = [],
-      currentLanguage = 'javascript'
-    } = interviewContext || {}
+  const {
+    title = 'Technical Challenge',
+    type = 'DSA Sandbox',
+    role = 'Software Engineer',
+    difficulty = 'medium',
+    agenda = [],
+    currentLanguage = 'javascript'
+  } = interviewContext || {}
 
-    // Derive current stage from agenda
+  const apiKey = process.env.OPENROUTER_API_KEY
+
+  try {
     const currentStage = agenda?.[0]?.topic || 'Implementation'
     const coreIntent = agenda?.[0]?.coreIntent || 'Evaluate code structure'
 
@@ -29,9 +40,19 @@ export async function POST(
 
     // Fallback response if API key is missing
     if (!apiKey || apiKey.includes('sk-or-v1-...')) {
-      return NextResponse.json({
-        hint: `You are working on "${title}". Think carefully about the data structure that lets you achieve O(1) lookups. What structure gives constant-time access AND preserves insertion order?`
-      })
+      const fallbackHint = (() => {
+        if (type === 'Behavioral & HR Round' || type === 'Resume Grill') {
+          return `Think about how you can structure your response using the STAR framework. What was the exact bottleneck, what actions did you personally take, and what was the quantifiable result?`
+        }
+        if (type === 'Live PR Critique') {
+          return `Look closely at the PR changes. Is there a race condition, resource leak, or security issue? Think about what happens under concurrent load.`
+        }
+        if (type === 'CS Fundamentals & System Design') {
+          return `Focus on system boundaries, latency bounds, and scaling trade-offs. What happens when the read-to-write ratio shifts dramatically?`
+        }
+        return `You are working on "${title}". Think carefully about the data structure that lets you achieve O(1) lookups. What structure gives constant-time access AND preserves insertion order?`
+      })()
+      return NextResponse.json({ hint: fallbackHint })
     }
 
     const systemPrompt = `You are a Principal Software Engineer giving a subtle, targeted clue to a candidate stuck during a mock interview.
@@ -86,14 +107,36 @@ Rules for your hint:
     }
 
     const data = await response.json()
-    const hint = data.choices?.[0]?.message?.content || 
-      `For "${title}", consider which data structure would let you track elements you have already seen in constant time.`
+    const fallbackHint = (() => {
+      if (type === 'Behavioral & HR Round' || type === 'Resume Grill') {
+        return `Formulate your answer using the STAR method. Describe the situation, your specific role, and the numerical impact of your actions.`
+      }
+      if (type === 'Live PR Critique') {
+        return `Analyze code safety, resource lifecycles, or thread-safety under load. Look for edge case vulnerabilities.`
+      }
+      if (type === 'CS Fundamentals & System Design') {
+        return `Consider cache invalidation, DB indexing, or single-points-of-failure in your system layout.`
+      }
+      return `For "${title}", consider which data structure would let you track elements you have already seen in constant time.`
+    })()
+
+    const hint = data.choices?.[0]?.message?.content || fallbackHint
 
     return NextResponse.json({ hint })
   } catch (err: any) {
     console.error('Hint API failed:', err)
-    return NextResponse.json({ 
-      hint: 'Think about what information you need to remember between loop iterations, and which data structure gives you the fastest lookup for that information.' 
-    })
+    const errorFallbackHint = (() => {
+      if (type === 'Behavioral & HR Round' || type === 'Resume Grill') {
+        return `Focus on structuring your experience. Emphasize your personal contribution, how you collaborated, and what you learned.`
+      }
+      if (type === 'Live PR Critique') {
+        return `Review the code stubs for concurrency, edge-case safety, or memory management. How would you refactor it?`
+      }
+      if (type === 'CS Fundamentals & System Design') {
+        return `Think about component separation, caching layers, and database scaling constraints.`
+      }
+      return 'Think about what information you need to remember between loop iterations, and which data structure gives you the fastest lookup for that information.'
+    })()
+    return NextResponse.json({ hint: errorFallbackHint })
   }
 }
