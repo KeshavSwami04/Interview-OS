@@ -71,6 +71,13 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
       return new Response(JSON.stringify({ error: 'Interview mock workspace not found' }), { status: 404 })
     }
 
+    // Fetch candidate profile summary and resume context
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('*')
+      .eq('id', interview.user_id)
+      .single()
+
     // 4. Build immersive interviewer persona based on track + difficulty
     type PersonaKey = 'DSA Sandbox' | 'CS Fundamentals & System Design' | 'Live PR Critique' | 'Resume Grill' | 'Behavioral & HR Round'
     type DifficultyKey = 'easy' | 'medium' | 'hard' | 'faang'
@@ -113,7 +120,12 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
     const diffKey = (['easy','medium','hard','faang'].includes(interview.difficulty) ? interview.difficulty : 'medium') as DifficultyKey
     const persona = personaMap[trackKey][diffKey]
 
-    const isInternOrFresher = /intern|fresher|campus/i.test(interview.role || '')
+    const profileSummary = profile?.profile_summary?.summary || ''
+    const profileSkills = profile?.profile_summary?.skills || []
+
+    const isInternOrFresher = 
+      /intern|fresher|campus|student|undergrad|university|college/i.test(interview.role || '') ||
+      /intern|fresher|campus|student|undergrad|university|college|third-year|3rd year|pursuing/i.test(profileSummary)
 
     const systemPrompt = `You are ${persona.name}, a ${persona.title} at ${persona.company}, conducting a real technical interview for a ${interview.role} role.
 
@@ -122,7 +134,9 @@ Your interviewing style: ${persona.style}
 Session context:
 - Interview Type: ${interview.type}
 - Difficulty: ${interview.difficulty}
-- Candidate: ${isInternOrFresher ? 'Campus/Intern candidate — be firm but encouraging. After feedback, briefly note what was being evaluated.' : 'Experienced hire — hold to production standards, no hand-holding.'}
+- Candidate Background: ${isInternOrFresher ? 'Undergraduate / Intern / Fresher candidate. Adjust expectations accordingly (encourage, check fundamental concepts first, do not assume extensive professional team experience).' : 'Experienced hire. Hold to high industry production standards.'}
+- Candidate Resume Summary: ${profileSummary || 'Not provided'}
+- Candidate Key Skills: ${JSON.stringify(profileSkills)}
 - Agenda: ${JSON.stringify(interview.agenda)}
 - Current code in editor:\n${code}
 
