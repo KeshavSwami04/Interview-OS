@@ -64,6 +64,13 @@ export async function POST(
     let scorecard = null
     let roadmap = null
 
+    // Pre-compute participation metrics to anchor scoring in reality
+    const candidateMessages = messages.filter((m: any) => m.sender === 'candidate')
+    const interviewerMessages = messages.filter((m: any) => m.sender === 'interviewer')
+    const totalCandidateWords = candidateMessages.reduce((acc: number, m: any) => acc + (m.message_text?.split(' ')?.length || 0), 0)
+    const hasCodeSubmission = candidateMessages.some((m: any) => m.code_submission && m.code_submission.trim().length > 30)
+    const hasSubstantiveAnswers = candidateMessages.some((m: any) => (m.message_text?.split(' ')?.length || 0) > 20)
+
     // Helper: Mock fallback evaluation data if API key is not configured
     if (!apiKey || apiKey.includes('sk-or-v1-...')) {
       scorecard = {
@@ -98,36 +105,60 @@ export async function POST(
         }
       ]
     } else {
-      // Direct call to OpenRouter Gemini Flash to evaluate the transcript
-      const evaluationPrompt = `You are a Principal Engineer evaluating a candidate's mock interview performance.
-Review the following complete chat transcript and final code state:
-\n${JSON.stringify(messages.map(m => ({ sender: m.sender, text: m.message_text, code: m.code_submission })))}\n
+      // Direct call to OpenRouter to evaluate the transcript
+      const evaluationPrompt = `You are a senior engineering hiring manager evaluating a candidate's mock technical interview. Your job is to provide an HONEST, CALIBRATED score. Do NOT inflate scores — a poor performance should score poorly.
 
-Based on their answers and refactoring quality:
-1. Grade them from 0 to 100 on overall, communication, problemSolving, and technical scores.
-2. Outline specific strengths and weaknesses (2-3 items each).
-3. Generate a structured 2-3 step learning roadmap targeting their exact weaknesses.
+PARTICIPATION METRICS (computed from transcript):
+- Total candidate responses: ${candidateMessages.length} (out of ${interviewerMessages.length} interviewer questions)
+- Total words written by candidate: ${totalCandidateWords}
+- Did the candidate write meaningful code (>30 chars): ${hasCodeSubmission ? 'YES' : 'NO — penalize technical score heavily'}
+- Did the candidate give substantive answers (>20 words per answer): ${hasSubstantiveAnswers ? 'YES' : 'NO — penalize communication score heavily'}
+- Interview type: ${interview.type}
+- Interview difficulty: ${interview.difficulty}
+- Target role: ${interview.role}
 
-You MUST return ONLY a JSON object conforming exactly to this schema:
+FULL TRANSCRIPT:
+${JSON.stringify(messages.map((m: any) => ({ sender: m.sender, text: m.message_text, code: m.code_submission })))}
+
+SCORING RUBRIC — apply these STRICTLY:
+- 90-100: Exceptional. Candidate answered all questions correctly, wrote clean working code, explained complexity, handled edge cases, and showed depth.
+- 75-89: Strong. Answered most questions correctly with minor gaps. Code works but has some issues.
+- 60-74: Adequate. Got the general approach but made notable mistakes. Code is partial or has bugs.
+- 40-59: Weak. Struggled significantly. Answered only 1-2 questions superficially. Code is mostly stubs.
+- 20-39: Very poor. Barely participated. Answered nothing meaningfully. Code untouched or trivially wrong.
+- 0-19: Did not participate. Candidate gave no real answers and submitted no code.
+
+PENALTIES (apply these before scoring):
+- If candidate wrote fewer than 2 substantive responses: subtract 30 from all scores.
+- If no meaningful code was submitted: cap technical score at 45.
+- If candidate answered 0 or 1 questions: overall score MUST be below 50.
+- If total candidate words < 50: overall score MUST be below 40.
+- Never give an overall score above 60 if the candidate quit early or barely engaged.
+
+Generate specific strengths and weaknesses that reference ACTUAL content from the transcript. Do NOT generate generic feedback. If the candidate did not participate enough to evaluate, state that explicitly in weaknesses.
+
+Return ONLY a JSON object matching this schema exactly:
 {
   "scorecard": {
-    "overall": 80,
-    "communication": 75,
-    "problemSolving": 85,
-    "technical": 80,
-    "strengths": ["Identified race condition", "Clean code patterns"],
-    "weaknesses": ["Vague on transaction isolation", "Missed error boundary validation"]
+    "overall": <integer 0-100>,
+    "communication": <integer 0-100>,
+    "problemSolving": <integer 0-100>,
+    "technical": <integer 0-100>,
+    "strengths": ["specific observation from transcript", "..."],
+    "weaknesses": ["specific observation from transcript", "..."]
   },
   "roadmap": [
     {
       "id": 1,
-      "title": "Topic name",
-      "topic": "Category",
-      "desc": "Short actionable description of what to study",
-      "resource": "MDN/PostgreSQL documentation url"
+      "title": "Specific topic to study",
+      "topic": "Category (e.g. Algorithms, OS, Concurrency)",
+      "desc": "Specific actionable study task based on their actual gaps",
+      "resource": "URL to a real documentation page or learning resource"
     }
   ]
 }`
+
+
 
       const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
         method: 'POST',
@@ -177,7 +208,45 @@ You MUST return ONLY a JSON object conforming exactly to this schema:
       ]
     }
 
-    // 4. Update the interview session record status, scorecard, and roadmap in Supabase
+    // 4. Server-side deterministic score enforcement — safety net in case LLM ignores rubric
+    if (scorecard) {
+      const clamp = (v: number, min: number, max: number) => Math.max(min, Math.min(max, Math.round(v)))
+      const totalCandidateResponses = candidateMessages.length
+      const isZeroParticipation = totalCandidateWords < 30
+      const isMinimalParticipation = totalCandidateResponses <= 1 || totalCandidateWords < 60
+
+      if (isZeroParticipation) {
+        // Candidate essentially did nothing
+        scorecard.overall       = clamp(scorecard.overall, 0, 25)
+        scorecard.communication = clamp(scorecard.communication, 0, 20)
+        scorecard.problemSolving = clamp(scorecard.problemSolving, 0, 25)
+        scorecard.technical     = clamp(scorecard.technical, 0, 20)
+      } else if (isMinimalParticipation) {
+        // Only 1 or very short response — hard cap at 50
+        scorecard.overall       = clamp(scorecard.overall, 0, 50)
+        scorecard.communication = clamp(scorecard.communication, 0, 45)
+        scorecard.problemSolving = clamp(scorecard.problemSolving, 0, 50)
+        scorecard.technical     = clamp(scorecard.technical, 0, 45)
+      }
+
+      if (!hasCodeSubmission) {
+        // No meaningful code written — cap technical regardless
+        scorecard.technical = clamp(scorecard.technical, 0, 45)
+      }
+
+      // Recalculate overall as weighted average if sub-scores changed significantly
+      const computedOverall = Math.round(
+        scorecard.technical * 0.35 +
+        scorecard.problemSolving * 0.35 +
+        scorecard.communication * 0.30
+      )
+      // If the LLM overall is suspiciously higher than what the sub-scores justify, correct it
+      if (scorecard.overall > computedOverall + 15) {
+        scorecard.overall = computedOverall
+      }
+    }
+
+    // 5. Update the interview session record status, scorecard, and roadmap in Supabase
     const { error: updateError } = await supabase
       .from('interviews')
       .update({
