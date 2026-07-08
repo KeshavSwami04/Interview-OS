@@ -124,9 +124,14 @@ export default function DashboardShell({ user, profile, initialInterviews }: Das
 
               <span className="font-semibold tracking-tight text-white text-md">Interview OS</span>
             </div>
-            <nav className="hidden md:flex items-center gap-4 text-xs font-medium text-neutral-400">
-              <span className="text-white border-b-2 border-[#0066FF] pb-4 pt-1 cursor-default">Dashboard</span>
-              <button onClick={() => router.push('/dashboard/onboarding')} className="hover:text-white transition-colors pb-4 pt-1 cursor-pointer">Re-sync Profiles</button>
+            <nav className="hidden md:flex items-center gap-1.5 text-xs font-medium">
+              <span className="px-3 py-1.5 rounded-md bg-[#121212] border border-[#1F1F1F] text-white cursor-default">Dashboard</span>
+              <button 
+                onClick={() => router.push('/dashboard/onboarding')} 
+                className="px-3 py-1.5 rounded-md text-neutral-400 hover:text-white hover:bg-[#121212] transition-colors cursor-pointer"
+              >
+                Re-sync Profiles
+              </button>
             </nav>
           </div>
 
