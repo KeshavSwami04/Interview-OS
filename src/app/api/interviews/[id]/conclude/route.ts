@@ -137,28 +137,17 @@ PENALTIES (apply these before scoring):
 
 Generate specific strengths and weaknesses that reference ACTUAL content from the transcript. Do NOT generate generic feedback. If the candidate did not participate enough to evaluate, state that explicitly in weaknesses.
 
-Return ONLY a JSON object matching this schema exactly:
+Return ONLY a JSON object with this schema (no roadmap needed here):
 {
   "scorecard": {
     "overall": <integer 0-100>,
     "communication": <integer 0-100>,
     "problemSolving": <integer 0-100>,
     "technical": <integer 0-100>,
-    "strengths": ["specific observation from transcript", "..."],
-    "weaknesses": ["specific observation from transcript", "..."]
-  },
-  "roadmap": [
-    {
-      "id": 1,
-      "title": "Specific topic to study",
-      "topic": "Category (e.g. Algorithms, OS, Concurrency)",
-      "desc": "Specific actionable study task based on their actual gaps",
-      "resource": "URL to a real documentation page or learning resource"
-    }
-  ]
+    "strengths": ["quote or paraphrase from the actual session", "..."],
+    "weaknesses": ["specific gap observed in the session", "..."]
+  }
 }`
-
-
 
       const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
         method: 'POST',
@@ -171,7 +160,6 @@ Return ONLY a JSON object matching this schema exactly:
         body: JSON.stringify({
           model: 'openrouter/free',
           messages: [{ role: 'user', content: evaluationPrompt }],
-
           response_format: { type: 'json_object' },
           temperature: 0.2
         })
@@ -181,8 +169,71 @@ Return ONLY a JSON object matching this schema exactly:
         const data = await response.json()
         const contentStr = data.choices?.[0]?.message?.content || '{}'
         const parsed = extractJson(contentStr) || {}
-        scorecard = parsed.scorecard
-        roadmap = parsed.roadmap
+        scorecard = parsed.scorecard || null
+      }
+
+      // --- Second focused call: generate a targeted study roadmap ---
+      // Extract the actual questions asked and mistakes made from the transcript
+      const interviewerQs = interviewerMessages.map((m: any) => m.message_text).join('\n\n---\n\n')
+      const candidateAnswers = candidateMessages.map((m: any) =>
+        `Answer: ${m.message_text}${m.code_submission ? `\nCode submitted:\n${m.code_submission}` : ''}`
+      ).join('\n\n---\n\n')
+
+      const roadmapPrompt = `You are a senior engineering mentor. A candidate just completed a ${interview.type} mock interview for a ${interview.role} position at ${interview.difficulty} difficulty.
+
+WHAT THE INTERVIEWER ASKED (these are the EXACT questions/topics covered in this session):
+${interviewerQs}
+
+WHAT THE CANDIDATE SAID AND CODED:
+${candidateAnswers}
+
+WEAKNESSES IDENTIFIED (from scorecard):
+${scorecard ? JSON.stringify(scorecard.weaknesses) : 'See transcript above'}
+
+Your task: Generate a PERSONALIZED study roadmap of 3-5 items. Each item MUST:
+1. Directly address a SPECIFIC gap observed in THIS session — not generic advice
+2. Reference the exact concept, algorithm, or system component that came up in the interview above
+3. Name what the candidate got wrong or incomplete, and what they should study to fix it
+4. Include a real, working URL to a documentation page, tutorial, or authoritative resource (e.g. MDN, GeeksforGeeks, CS50, LeetCode editorial, PostgreSQL docs, DDIA book chapter)
+5. Describe a concrete action: "Practice writing X", "Read the chapter on Y", "Implement Z from scratch"
+
+Do NOT generate items for topics NOT discussed in this session.
+Do NOT add generic items like "study algorithms" or "practice coding" — every item must be traceable back to a specific moment in the transcript above.
+
+Return ONLY a JSON object:
+{
+  "roadmap": [
+    {
+      "id": 1,
+      "title": "Specific concept to master (name it precisely)",
+      "topic": "Category (e.g. Dynamic Programming, Concurrency, System Design)",
+      "desc": "Exactly what to do: e.g. 'Implement a sliding window solution for longest subarray problems — you defaulted to brute force O(N²) when O(N) was available'",
+      "resource": "https://... (real working URL)"
+    }
+  ]
+}`
+
+      const roadmapResponse = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${apiKey}`,
+          'HTTP-Referer': 'http://localhost:3000',
+          'X-Title': 'Interview OS',
+        },
+        body: JSON.stringify({
+          model: 'openrouter/free',
+          messages: [{ role: 'user', content: roadmapPrompt }],
+          response_format: { type: 'json_object' },
+          temperature: 0.4
+        })
+      })
+
+      if (roadmapResponse.ok) {
+        const roadmapData = await roadmapResponse.json()
+        const roadmapStr = roadmapData.choices?.[0]?.message?.content || '{}'
+        const roadmapParsed = extractJson(roadmapStr) || {}
+        roadmap = roadmapParsed.roadmap || null
       }
 
     }
