@@ -410,6 +410,31 @@ Return ONLY a raw JSON object:
 
     const title = `${role} Mock (${type})`
 
+    // 2.5 Ensure the user only has a maximum of 5 interviews (delete oldest if limit exceeded)
+    try {
+      const { data: existingInterviews } = await supabase
+        .from('interviews')
+        .select('id')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: true }) // Oldest first
+
+      if (existingInterviews && existingInterviews.length >= 5) {
+        const deleteCount = existingInterviews.length - 4 // leave room for 4, so the new one makes 5
+        const idsToDelete = existingInterviews.slice(0, deleteCount).map(i => i.id)
+        
+        const { error: deleteError } = await supabase
+          .from('interviews')
+          .delete()
+          .in('id', idsToDelete)
+
+        if (deleteError) {
+          console.error('Failed to clean up oldest interviews:', deleteError)
+        }
+      }
+    } catch (cleanupErr) {
+      console.error('Error during oldest interviews cleanup check:', cleanupErr)
+    }
+
     // 3. Create interview row
     const { data: interview, error: dbError } = await supabase
       .from('interviews')
