@@ -223,6 +223,8 @@ export default function InterviewWorkspace({ interview, initialMessages }: Inter
           prev.map(m => m.id === botMsgId ? { ...m, message_text: accumulatedText } : m)
         )
       }
+      // New interviewer question has fully arrived — clear any stale clue
+      setHintText(null)
     } catch (err) {
       console.error(err)
       alert('Failed to transmit message. Retrying...')
@@ -242,7 +244,7 @@ export default function InterviewWorkspace({ interview, initialMessages }: Inter
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          chatHistory: messages.slice(-6), // send last 6 turns for richer context
+          chatHistory: messages.slice(-8), // always send latest messages for freshest context
           codeState: codeContent,
           interviewContext: {
             title: interview.title,
