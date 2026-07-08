@@ -457,7 +457,7 @@ Return ONLY a raw JSON object:
             'X-Title': 'Interview OS',
           },
           body: JSON.stringify({
-            model: 'meta-llama/llama-3-8b-instruct',
+            model: 'openrouter/free',
             messages: [{ role: 'user', content: generatorPrompt }],
             response_format: { type: 'json_object' },
             temperature: 0.7

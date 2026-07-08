@@ -158,7 +158,7 @@ Return ONLY a JSON object with this schema (no roadmap needed here):
           'X-Title': 'Interview OS',
         },
         body: JSON.stringify({
-          model: 'meta-llama/llama-3-8b-instruct',
+          model: 'openrouter/free',
           messages: [{ role: 'user', content: evaluationPrompt }],
           response_format: { type: 'json_object' },
           temperature: 0.2
@@ -222,7 +222,7 @@ Return ONLY a JSON object:
           'X-Title': 'Interview OS',
         },
         body: JSON.stringify({
-          model: 'meta-llama/llama-3-8b-instruct',
+          model: 'openrouter/free',
           messages: [{ role: 'user', content: roadmapPrompt }],
           response_format: { type: 'json_object' },
           temperature: 0.4

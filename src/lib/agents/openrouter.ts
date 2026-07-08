@@ -25,7 +25,7 @@ export async function getOpenRouterStream(messages: any[]) {
       'X-Title': 'Interview OS',
     },
     body: JSON.stringify({
-      model: 'meta-llama/llama-3-8b-instruct',
+      model: 'openrouter/free',
       messages,
       stream: true,
     }),
