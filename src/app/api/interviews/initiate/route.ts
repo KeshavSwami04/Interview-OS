@@ -146,48 +146,184 @@ Take your time, read the problem. Tell me: what's your initial instinct for how 
         const summaryText = profile?.profile_summary?.summary || ''
         const reposList = profile?.github_summary?.selectedRepos || []
 
-        const generatorPrompt = `You are a Principal Software Engineer designing a coding/technical mock interview challenge for a candidate.
-        Target Role: ${role}
-        Difficulty: ${difficulty}
-        Round Type: ${type}
-        Resume Skills: ${JSON.stringify(skillsList)}
-        Profile Summary: ${summaryText}
-        GitHub Projects: ${JSON.stringify(reposList.map((r: any) => ({ name: r.name, summary: r.analyzedSummary })))}
+        const generatorPrompt = (() => {
 
-        Configure the challenge based on the Round Type:
-        1. "Live PR Critique": Create a realistic code snippet representing a common concurrency bug, data race, or logic vulnerability in their primary language stack. Provide skeleton code containing the flaw.
-        2. "CS Fundamentals & System Design": Design a technical challenge covering CS fundamentals (such as OOP class design, caching policies like LRU, TCP/Socket networking, OS process threading, or system APIs) in their primary programming language.
-        3. "Resume Grill": Generate a custom coding prompt derived directly from engineering projects/skills in their profile.
-        4. "General DSA Mock" (or any other type): Design a classic DSA problem (graphs, binary search, sliding window, arrays) formatted skeleton code in their primary programming language.
+          // Resume Grill — driven entirely by the candidate's actual resume content
+          if (type === 'Resume Grill') {
+            return `You are a senior Engineering Manager conducting a Resume & Projects deep-dive interview.
 
-        Task details:
-        - Select the programming language most appropriate for their skills list.
-        - Provide initial skeleton code templates translated into JavaScript, TypeScript, Python, C++, Java, Go, and SQL (if applicable) matching the same problem signatures.
-        - IMPORTANT: Do NOT place code comments (like // Expected: value) inside or before closing parentheses/brackets/semicolons on the same line, as this comments them out and causes syntax/compile errors. Always place comments at the very end of the line (e.g. use 'console.log(func(arg)); // Expected: val').
-        - Outline a 3-stage agenda (concept walkthrough, implementation, review/edge cases).
-        - Write the "initialQuestion" as an immersive, realistic interview opening. It MUST: (1) introduce a named interviewer and their company/title relevant to the round type and difficulty, (2) mention that the session is approximately 45 minutes, (3) describe the problem naturally as a real engineer would explain it verbally (not as a numbered list of constraints), (4) end by asking the candidate for their initial high-level approach — NOT to start coding yet. Make it feel like the first 2 minutes of a real video call interview, not a quiz prompt.
+Candidate Profile:
+- Target Role: ${role}
+- Difficulty: ${difficulty}
+- Resume Skills: ${JSON.stringify(skillsList)}
+- Profile Summary: ${summaryText}
+- GitHub Projects: ${JSON.stringify(reposList.map((r: any) => ({ name: r.name, summary: r.analyzedSummary })))}
 
+Your task: Generate a resume grill session plan rooted in their ACTUAL projects and skills listed above.
 
+Session structure (5-stage progression — one stage per round of questions):
+Stage 1: Opening — candidate introduces themselves and walks through their most significant project.
+Stage 2: Technical deep-dive — drill into architecture decisions, tech stack choices, and trade-offs in their top project.
+Stage 3: Challenges & failures — what went wrong, how did they debug it, what would they change.
+Stage 4: Scale & production — how would the system handle 10x load? What monitoring, alerting, or deployment pipeline did they set up?
+Stage 5: Behavioral close — ownership, impact, and why they made specific decisions.
 
-        Return ONLY a raw JSON object matching this schema exactly (do not output any other text or markdown code blocks):
-        {
-          "title": "Short descriptive name of the challenge",
-          "initialQuestion": "Detailed welcoming message explaining the problem statement, constraints, and instructions",
-          "templates": {
-            "javascript": "Skeleton code translated in JavaScript",
-            "typescript": "Skeleton code translated in TypeScript",
-            "python": "Skeleton code translated in Python",
-            "cpp": "Skeleton code translated in C++ (cpp)",
-            "java": "Skeleton code translated in Java",
-            "go": "Skeleton code translated in Go",
-            "sql": "Skeleton code translated in SQL (if applicable, else empty)"
-          },
-          "agenda": [
-            { "stage": 1, "topic": "Conceptual Approach", "coreIntent": "Evaluate logical planning" },
-            { "stage": 2, "topic": "Coding Implementation", "coreIntent": "Evaluate code structure" },
-            { "stage": 3, "topic": "Scale & Edge Cases", "coreIntent": "Evaluate resilience" }
-          ]
-        }`
+The "initialQuestion" must introduce a named interviewer (e.g. "Anjali Bose, Engineering Manager at Amazon") and set the 45-minute context. Then ask the candidate to walk through their most impactful project from their resume. It must feel like the opening of a real HR+Technical round.
+
+The "templates" object should contain a simple notepad/scratch template since Resume Grill is conversational, not code-focused. Something like: "// Interview Notes\n// Use this space to sketch architectures, write pseudo-code, or note your talking points"
+
+Return ONLY a raw JSON object:
+{
+  "title": "Short descriptive name",
+  "initialQuestion": "Immersive interview opener (2-3 paragraphs)",
+  "templates": {
+    "javascript": "// Interview Notes\\n// Sketch your architecture or talking points here",
+    "typescript": "// Interview Notes\\n// Sketch your architecture or talking points here",
+    "python": "# Interview Notes\\n# Sketch your architecture or talking points here",
+    "cpp": "// Interview Notes",
+    "java": "// Interview Notes",
+    "go": "// Interview Notes",
+    "sql": "-- Interview Notes"
+  },
+  "agenda": [
+    { "stage": 1, "topic": "Project Walkthrough", "coreIntent": "Evaluate communication and ownership of past work" },
+    { "stage": 2, "topic": "Technical Deep-Dive", "coreIntent": "Evaluate architecture decisions and tech stack reasoning" },
+    { "stage": 3, "topic": "Challenges & Debugging", "coreIntent": "Evaluate problem solving and learning from failure" },
+    { "stage": 4, "topic": "Scale & Production", "coreIntent": "Evaluate systems thinking and production awareness" },
+    { "stage": 5, "topic": "Behavioral Close", "coreIntent": "Evaluate ownership, impact, and decision rationale" }
+  ]
+}`
+          }
+
+          // Live PR Critique — must use actual GitHub repo context
+          if (type === 'Live PR Critique') {
+            const repoForPR = reposList.find((r: any) => r.url === repoUrl) || reposList[0]
+            const repoName = repoForPR?.name || (repoUrl ? repoUrl.split('/').pop() : 'project-repo')
+            const repoSummary = repoForPR?.analyzedSummary || 'A software project repository'
+            const primaryLang = skillsList.includes('TypeScript') ? 'typescript' : skillsList.includes('Python') ? 'python' : skillsList.includes('Java') ? 'java' : skillsList.includes('C++') ? 'cpp' : 'javascript'
+            return `You are a senior engineer running a Live Code Review session on a candidate's actual GitHub repository.
+
+Repository being reviewed: "${repoName}"
+Repository context: ${repoSummary}
+Candidate's primary language stack: ${JSON.stringify(skillsList)}
+Primary language for this review: ${primaryLang}
+Target Role: ${role}, Difficulty: ${difficulty}
+
+Your task: Generate a realistic PR review session. The code snippet you create MUST:
+1. Be plausibly from the "${repoName}" codebase (match the project type/domain based on the repo name and summary)
+2. Contain a REAL, specific flaw — choose ONE of: race condition in async code, SQL injection or input sanitization gap, memory leak in a loop, incorrect error handling that swallows exceptions, or an N+1 database query pattern
+3. Be written in ${primaryLang}
+4. Be 20-40 lines long — realistic PR diff size
+5. Have 3 stages: Flaw Identification → Refactoring → Prevention (how to avoid this class of bug in future PRs)
+
+The "initialQuestion" must: introduce a named engineer reviewer at a relevant company, mention 45 minutes, show the code in context ("I've pulled this from your ${repoName} repo — it's the auth middleware / API handler / data layer"), and ask the candidate to read it and describe what they see before diagnosing.
+
+Return ONLY a raw JSON object:
+{
+  "title": "Short descriptive name",
+  "initialQuestion": "Immersive code review opener",
+  "templates": {
+    "javascript": "actual flawed JS code matching the repo domain",
+    "typescript": "same flaw in TypeScript",
+    "python": "same flaw in Python",
+    "cpp": "same flaw in C++ if applicable",
+    "java": "same flaw in Java if applicable",
+    "go": "same flaw in Go if applicable",
+    "sql": "SQL equivalent if applicable else empty"
+  },
+  "agenda": [
+    { "stage": 1, "topic": "Flaw Identification", "coreIntent": "Identify the bug class and how it manifests" },
+    { "stage": 2, "topic": "Refactoring", "coreIntent": "Fix the issue with correct, production-safe code" },
+    { "stage": 3, "topic": "Prevention", "coreIntent": "Explain how to prevent this class of bug in future PRs" }
+  ]
+}`
+          }
+
+          // DSA Sandbox — 3 distinct problems across 3 stages, increasing difficulty
+          if (type === 'DSA Sandbox') {
+            const difficultyProblems: Record<string, string> = {
+              easy: 'Stage 1: an array/string manipulation problem (e.g. two-sum, valid parentheses). Stage 2: a linked list or stack/queue problem. Stage 3: a binary search variant.',
+              medium: 'Stage 1: a sliding window or two-pointer problem. Stage 2: a binary tree traversal or BFS/DFS problem. Stage 3: a dynamic programming problem (1D DP like climbing stairs or house robber).',
+              hard: 'Stage 1: a graph problem (shortest path or cycle detection). Stage 2: an interval scheduling or merge problem. Stage 3: a 2D dynamic programming problem (edit distance, coin change 2, LCS).'
+            }
+            const problemSet = difficultyProblems[difficulty] || difficultyProblems.medium
+            return `You are an SDE-2/SDE-3 at a product company running a Coding Round with 3 back-to-back DSA problems.
+
+Candidate Profile:
+- Target Role: ${role}, Difficulty: ${difficulty}
+- Primary Language: ${skillsList.includes('C++') ? 'C++' : skillsList.includes('Java') ? 'Java' : skillsList.includes('Python') ? 'Python' : 'JavaScript'}
+- Skills: ${JSON.stringify(skillsList)}
+
+Session Structure (3 separate coding problems):
+${problemSet}
+
+Rules:
+1. Generate 3 DISTINCT, NAMED coding problems (e.g. "Longest Subarray with Sum K", "Number of Islands", "Edit Distance")
+2. Each problem is a separate agenda stage — do NOT reuse the same problem
+3. The code skeleton for stage 1 goes in "templates" — stages 2 and 3 skeletons go in agenda[1].templates and agenda[2].templates respectively
+4. Problems must be solvable with standard library only — no custom imports needed
+5. IMPORTANT: Do NOT place code comments inside or before closing parentheses/brackets/semicolons on the same line. Place comments at end of line only.
+
+The "initialQuestion" must introduce the interviewer and company, mention 3 problems across 45 minutes (~15 min each), and present the FIRST problem naturally as a real interviewer would describe it verbally. Ask for approach first, not code.
+
+Return ONLY a raw JSON object:
+{
+  "title": "DSA Round — 3 Problems",
+  "initialQuestion": "Immersive interview opener presenting problem 1",
+  "templates": {
+    "javascript": "Problem 1 skeleton in JS",
+    "typescript": "Problem 1 skeleton in TS",
+    "python": "Problem 1 skeleton in Python",
+    "cpp": "Problem 1 skeleton in C++",
+    "java": "Problem 1 skeleton in Java",
+    "go": "Problem 1 skeleton in Go",
+    "sql": ""
+  },
+  "agenda": [
+    { "stage": 1, "topic": "Problem 1 name", "coreIntent": "Evaluate approach and correctness", "problemStatement": "Full problem description", "templates": { "javascript": "...", "typescript": "...", "python": "...", "cpp": "...", "java": "...", "go": "...", "sql": "" } },
+    { "stage": 2, "topic": "Problem 2 name", "coreIntent": "Evaluate efficiency and edge cases", "problemStatement": "Full problem description", "templates": { "javascript": "...", "typescript": "...", "python": "...", "cpp": "...", "java": "...", "go": "...", "sql": "" } },
+    { "stage": 3, "topic": "Problem 3 name", "coreIntent": "Evaluate optimization and complexity analysis", "problemStatement": "Full problem description", "templates": { "javascript": "...", "typescript": "...", "python": "...", "cpp": "...", "java": "...", "go": "...", "sql": "" } }
+  ]
+}`
+          }
+
+          // CS Fundamentals & System Design
+          return `You are a Principal Engineer running a CS Fundamentals & System Design interview.
+
+Candidate Profile:
+- Target Role: ${role}, Difficulty: ${difficulty}
+- Skills: ${JSON.stringify(skillsList)}
+- Profile: ${summaryText}
+
+Session Structure (3 stages):
+Stage 1: Low-level design (class design, OOP principles, design patterns)
+Stage 2: System component deep-dive (caching, queuing, database indexing, OS concepts)
+Stage 3: Scale & trade-offs (CAP theorem, consistency models, horizontal vs vertical scaling)
+
+Generate a realistic interview session with a named interviewer at a relevant company. The "initialQuestion" must present a design problem naturally (e.g. "Design a URL shortener", "Design a rate limiter") and ask for the candidate's initial high-level thinking before any implementation.
+
+IMPORTANT: Code comments must appear at end of line only, never inside or before closing brackets.
+
+Return ONLY a raw JSON object:
+{
+  "title": "Short descriptive name",
+  "initialQuestion": "Immersive design interview opener",
+  "templates": {
+    "javascript": "Class/function skeleton for the design problem",
+    "typescript": "TypeScript skeleton",
+    "python": "Python skeleton",
+    "cpp": "C++ skeleton",
+    "java": "Java skeleton",
+    "go": "Go skeleton",
+    "sql": "Schema SQL if applicable"
+  },
+  "agenda": [
+    { "stage": 1, "topic": "Low-Level Design", "coreIntent": "Evaluate OOP and design pattern usage" },
+    { "stage": 2, "topic": "System Component Deep-Dive", "coreIntent": "Evaluate CS fundamentals knowledge" },
+    { "stage": 3, "topic": "Scale & Trade-offs", "coreIntent": "Evaluate systems thinking" }
+  ]
+}`
+        })()
 
         const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
           method: 'POST',

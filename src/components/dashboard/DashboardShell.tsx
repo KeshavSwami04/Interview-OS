@@ -423,8 +423,8 @@ export default function DashboardShell({ user, profile, initialInterviews }: Das
 
                 <div className="space-y-1">
                   <label className="text-[10px] text-neutral-400 font-semibold uppercase tracking-wider">Difficulty Level</label>
-                  <div className="grid grid-cols-4 gap-2">
-                    {['easy', 'medium', 'hard', 'faang'].map((level) => (
+                  <div className="grid grid-cols-3 gap-2">
+                    {['easy', 'medium', 'hard'].map((level) => (
                       <button
                         type="button"
                         key={level}
