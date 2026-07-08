@@ -72,7 +72,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
     }
 
     // 4. Build immersive interviewer persona based on track + difficulty
-    type PersonaKey = 'DSA Sandbox' | 'CS Fundamentals & System Design' | 'Live PR Critique' | 'Resume Grill'
+    type PersonaKey = 'DSA Sandbox' | 'CS Fundamentals & System Design' | 'Live PR Critique' | 'Resume Grill' | 'Behavioral & HR Round'
     type DifficultyKey = 'easy' | 'medium' | 'hard' | 'faang'
     interface Persona { name: string; company: string; title: string; style: string }
 
@@ -100,6 +100,12 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
         medium: { name: 'Nisha Reddy',   company: 'Wipro',      title: 'Engineering Manager',style: 'project-depth focused. Walk through architecture decisions, why specific frameworks were chosen, and what they would do differently.' },
         hard:   { name: 'Varun Joshi',   company: 'Razorpay',   title: 'Senior EM',          style: 'cross-functional and exacting. Expect candidates to quantify impact, explain scaling decisions, and handle failure scenarios from their projects.' },
         faang:  { name: 'Anjali Bose',   company: 'Amazon',     title: 'Bar Raiser',         style: 'relentless. Every answer triggers a deeper "tell me more." Looking for ownership, judgment under ambiguity, and measurable outcomes.' },
+      },
+      'Behavioral & HR Round': {
+        easy:   { name: 'Kunal Sen',     company: 'Cognizant',  title: 'HR Lead',            style: 'standard behavioral interviewing. Focus on basic fit, career goals, strengths/weaknesses, and general company values.' },
+        medium: { name: 'Shreya Roy',    company: 'Infosys',    title: 'Senior Talent Manager', style: 'STAR-based recruiter. Probe deeply into teamwork, conflict resolution, dealing with feedback, and ambiguous situations.' },
+        hard:   { name: 'Rohan Deshmukh',company: 'Google',     title: 'People Operations Lead', style: 'Googleyness & Leadership evaluator. Expect structured responses (STAR framework). Look for systemic thinking, bias action, humility, and positive leadership.' },
+        faang:  { name: 'Amit Verma',    company: 'Amazon',     title: 'Principal Bar Raiser', style: 'Amazon Leadership Principles expert. Challenge candidate behaviors against strict ownership, earn trust, disagree & commit, and customer obsession.' },
       },
     }
 
@@ -158,6 +164,16 @@ LIVE PR CRITIQUE RULES:
 - Stage 2 (Refactoring): Once they've identified the bug, ask them to fix it in the Monaco editor. Review their refactored code critically.
 - Stage 3 (Prevention): After the fix, shift to engineering culture: "How would you prevent this class of bug from reaching production? What would you add to the PR template or CI pipeline?"
 - Do not skip stages — each is a distinct evaluation dimension.
+` : ''}
+
+${interview.type === 'Behavioral & HR Round' ? `
+BEHAVIORAL & HR ROUND RULES:
+- This is a conversational HR interview — do NOT ask the candidate to write code. The Monaco editor is only a scratchpad.
+- Each stage of the agenda represents a different evaluation dimension: ${JSON.stringify((interview.agenda || []).map((s: any) => ({ stage: s.stage, topic: s.topic, intent: s.coreIntent })))}
+- Evaluate the candidate using the STAR methodology (Situation, Task, Action, Result).
+- Ask EXACTLY ONE follow-up question per response — never a list.
+- Challenge their claims if they are too generic. For example: "What exactly was your individual role in resolving that team dispute?", "How did you measure that 20% speedup?"
+- Do not let them off with boilerplate responses. Keep it direct and professional.
 ` : ''}
 
 CRITICAL: Never pose impossible constraint combinations (e.g., O(N) time + O(1) space + no mutation simultaneously for duplicate detection). If a candidate correctly calls this out, acknowledge it as a sharp observation and pivot to a solvable variant.`

@@ -401,9 +401,9 @@ export default function DashboardShell({ user, profile, initialInterviews }: Das
                   >
                     <option value="Live PR Critique">Live PR Critique (Repo Review)</option>
                     <option value="CS Fundamentals & System Design">CS Fundamentals & System Design</option>
-
                     <option value="DSA Sandbox">Coding Challenge (DSA)</option>
                     <option value="Resume Grill">Resume & Projects Mock</option>
+                    <option value="Behavioral & HR Round">Behavioral & HR Round</option>
                   </select>
                 </div>
 

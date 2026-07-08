@@ -47,6 +47,18 @@ function getFallbackTemplates(type: string, repoName: string) {
     }
   }
 
+  if (type === 'Behavioral & HR Round') {
+    return {
+      javascript: `// HR Interview Notes\n// Use this space to note down details of your STAR stories or talking points...`,
+      typescript: `// HR Interview Notes\n// Use this space to note down details of your STAR stories...`,
+      python: `# HR Interview Notes\n# Use this space to note down details of your STAR stories...`,
+      cpp: `// HR Interview Notes\n// Use this space to note down details of your STAR stories...`,
+      java: `// HR Interview Notes\n// Use this space to note down details of your STAR stories...`,
+      go: `// HR Interview Notes\n// Use this space to note down details of your STAR stories...`,
+      sql: `-- HR Interview Notes\n-- Use this space to note down details of your STAR stories...`
+    }
+  }
+
   // DSA Mock fallback
   return {
     javascript: `// Workspace\n\nfunction findDuplicateNumbers(arr) {\n    // Implement an O(N) runtime and O(1) auxiliary space duplicate finder\n    return [];\n}`,
@@ -118,6 +130,20 @@ I want you to walk me through what this function does, and then tell me: if two 
 We're going to work through a design problem today. Take a look at the skeleton on the right. I want to design a data structure that supports two operations — get(key) and put(key, value) — both in O(1) time, with a fixed capacity that evicts the least recently used entry when full.
 
 Before you touch any code: walk me through your high-level approach. Which data structures are you thinking about, and why? I want your reasoning first.`
+    } else if (type === 'Behavioral & HR Round') {
+      const fallbackTemplates = getFallbackTemplates(type, '')
+      agenda = [
+        {
+          stage: 1,
+          topic: 'STAR Storytelling Intro',
+          coreIntent: 'Evaluate presentation and initial experience outline',
+          initialCode: '// HR Interview Notes\n// Use this space to note down details of your STAR stories...',
+          templates: fallbackTemplates
+        }
+      ]
+      initialQuestion = `Hi, I'm Sneha Reddy, Talent Partner at Google. Good to meet you. We have about 45 minutes today for this behavioral round.
+
+I want to evaluate your communication, teamwork style, and leadership approach. Let's start with a general introduction: walk me through your background, and tell me about a time you faced a major technical bottleneck or tight deadline in a previous project. What was the situation, and what did you do?`
     } else {
       const fallbackTemplates = getFallbackTemplates(type, '')
       // General DSA Mock / Resume Mock fallback
@@ -147,6 +173,53 @@ Take your time, read the problem. Tell me: what's your initial instinct for how 
         const reposList = profile?.github_summary?.selectedRepos || []
 
         const generatorPrompt = (() => {
+
+          // Behavioral & HR Round
+          if (type === 'Behavioral & HR Round') {
+            return `You are a senior Talent Partner or HR Director conducting a Googleyness/Behavioral/HR mock interview.
+
+Candidate Profile:
+- Target Role: ${role}
+- Difficulty: ${difficulty}
+- Resume Skills: ${JSON.stringify(skillsList)}
+- Profile Summary: ${summaryText}
+
+Your task: Generate a high-end behavioral & HR interview session plan using the STAR framework.
+
+Session structure (5-stage progression — one stage per round of questions):
+Stage 1: Intro & STAR framework opening — candidate introduces themselves and talks about a time they had to work under a tight deadline or handle a conflict.
+Stage 2: Overcoming conflicts — handling disagreements with teammates, tech leads, or product managers.
+Stage 3: Ambiguity & change — how they handle changing specs, undefined requirements, or shifting project scope.
+Stage 4: Leadership & ownership — demonstrating extreme ownership, mentoring others, or taking initiative beyond their role.
+Stage 5: Vision & values — realistic questions about salary expectations, career trajectory, alignment with company culture.
+
+The "initialQuestion" must introduce a named recruiter (e.g. "Sneha Reddy, Talent Partner at Google") and set the 45-minute context. Then ask the candidate to introduce themselves and share their first STAR story (specifically a time they faced a major project bottleneck). It must feel like the opening of a real HR/Leadership bar-raiser round.
+
+The "templates" object should contain a simple notepad/scratch template since HR rounds are conversational:
+"// HR Interview Notes\n// Use this space to note down details of your STAR stories or talking points"
+
+Return ONLY a raw JSON object:
+{
+  "title": "Behavioral & HR Round",
+  "initialQuestion": "Immersive HR interview opener (2-3 paragraphs)",
+  "templates": {
+    "javascript": "// HR Interview Notes\\n// Note your STAR stories here",
+    "typescript": "// HR Interview Notes\\n// Note your STAR stories here",
+    "python": "# HR Interview Notes\\n# Note your STAR stories here",
+    "cpp": "// HR Interview Notes",
+    "java": "// HR Interview Notes",
+    "go": "// HR Interview Notes",
+    "sql": "-- HR Interview Notes"
+  },
+  "agenda": [
+    { "stage": 1, "topic": "STAR Framework Intro", "coreIntent": "Evaluate communication and initial STAR storytelling quality" },
+    { "stage": 2, "topic": "Conflict Resolution", "coreIntent": "Evaluate empathy, teamwork, and professionalism under friction" },
+    { "stage": 3, "topic": "Ambiguity & Adaptability", "coreIntent": "Evaluate flexibility and logical reasoning under shifting scopes" },
+    { "stage": 4, "topic": "Ownership & Initiative", "coreIntent": "Evaluate leadership and extreme ownership principles" },
+    { "stage": 5, "topic": "Vision & Compensation", "coreIntent": "Evaluate long-term alignment, career vision, and realistic negotiation" }
+  ]
+}`
+          }
 
           // Resume Grill — driven entirely by the candidate's actual resume content
           if (type === 'Resume Grill') {
