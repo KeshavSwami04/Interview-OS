@@ -25,7 +25,7 @@ export async function getOpenRouterStream(messages: any[]) {
       'X-Title': 'Interview OS',
     },
     body: JSON.stringify({
-      model: 'google/gemini-2.5-flash:free',
+      model: 'google/gemini-2.0-flash-exp:free',
       messages,
       stream: true,
     }),

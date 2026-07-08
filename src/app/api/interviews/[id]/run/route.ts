@@ -98,7 +98,7 @@ You MUST return ONLY a raw JSON object matching this schema exactly (no other te
         'X-Title': 'Interview OS',
       },
       body: JSON.stringify({
-        model: 'google/gemini-2.5-flash:free',
+        model: 'google/gemini-2.0-flash-exp:free',
         messages: [{ role: 'user', content: compilerPrompt }],
         response_format: { type: 'json_object' },
         temperature: 0.1
