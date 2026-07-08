@@ -200,19 +200,44 @@ Return ONLY a raw JSON object:
             const repoForPR = reposList.find((r: any) => r.url === repoUrl) || reposList[0]
             const repoName = repoForPR?.name || (repoUrl ? repoUrl.split('/').pop() : 'project-repo')
             const repoSummary = repoForPR?.analyzedSummary || 'A software project repository'
-            const primaryLang = skillsList.includes('TypeScript') ? 'typescript' : skillsList.includes('Python') ? 'python' : skillsList.includes('Java') ? 'java' : skillsList.includes('C++') ? 'cpp' : 'javascript'
+            
+            // Pick default language based on target role
+            const primaryLang = role.toLowerCase().includes('analyst') ? 'sql' :
+                                role.toLowerCase().includes('frontend') ? 'typescript' :
+                                skillsList.includes('TypeScript') ? 'typescript' :
+                                skillsList.includes('Python') ? 'python' :
+                                skillsList.includes('Java') ? 'java' :
+                                skillsList.includes('C++') ? 'cpp' : 'javascript'
+
+            // Customize PR flaw guidelines based on target role
+            const roleFlawGuideline = (() => {
+              if (role.toLowerCase().includes('analyst')) {
+                return `Create a SQL query or Python data pipeline script containing an analytical flaw. Specifically:
+                - SQL: generate a query with a missing JOIN condition causing a Cartesian product, incorrect GROUP BY aggregation, or unindexed slow subquery.
+                - Python: generate a Pandas snippet with a memory-heavy loop instead of vectorized operations, or an index alignment bug during data merges.`
+              }
+              if (role.toLowerCase().includes('frontend')) {
+                return `Create a React component or hooks script containing front-end specific flaws. Specifically:
+                - React stale closures in useEffect/callbacks, infinite re-render loops due to unmemoized reference dependency in dependencies array, or memory leaks from missing cleanup inside a subscription callback.`
+              }
+              return `Create a code snippet containing backend or generic systems flaws. Specifically:
+              - A race condition or thread-safety bug in async code, SQL injection / input sanitization gap, memory leak in a loop, or incorrect database transaction isolation usage.`
+            })()
+
             return `You are a senior engineer running a Live Code Review session on a candidate's actual GitHub repository.
 
 Repository being reviewed: "${repoName}"
 Repository context: ${repoSummary}
+Candidate's target role: ${role}
 Candidate's primary language stack: ${JSON.stringify(skillsList)}
 Primary language for this review: ${primaryLang}
-Target Role: ${role}, Difficulty: ${difficulty}
+Interview Difficulty: ${difficulty}
 
 Your task: Generate a realistic PR review session. The code snippet you create MUST:
 1. Be plausibly from the "${repoName}" codebase (match the project type/domain based on the repo name and summary)
-2. Contain a REAL, specific flaw — choose ONE of: race condition in async code, SQL injection or input sanitization gap, memory leak in a loop, incorrect error handling that swallows exceptions, or an N+1 database query pattern
-3. Be written in ${primaryLang}
+2. Contain a REAL, specific flaw customized for their target role:
+   ${roleFlawGuideline}
+3. Be written in ${primaryLang} (or its equivalent)
 4. Be 20-40 lines long — realistic PR diff size
 5. Have 3 stages: Flaw Identification → Refactoring → Prevention (how to avoid this class of bug in future PRs)
 
@@ -241,27 +266,38 @@ Return ONLY a raw JSON object:
 
           // DSA Sandbox — 3 distinct problems across 3 stages, increasing difficulty
           if (type === 'DSA Sandbox') {
-            const difficultyProblems: Record<string, string> = {
-              easy: 'Stage 1: an array/string manipulation problem (e.g. two-sum, valid parentheses). Stage 2: a linked list or stack/queue problem. Stage 3: a binary search variant.',
-              medium: 'Stage 1: a sliding window or two-pointer problem. Stage 2: a binary tree traversal or BFS/DFS problem. Stage 3: a dynamic programming problem (1D DP like climbing stairs or house robber).',
-              hard: 'Stage 1: a graph problem (shortest path or cycle detection). Stage 2: an interval scheduling or merge problem. Stage 3: a 2D dynamic programming problem (edit distance, coin change 2, LCS).'
-            }
-            const problemSet = difficultyProblems[difficulty] || difficultyProblems.medium
-            return `You are an SDE-2/SDE-3 at a product company running a Coding Round with 3 back-to-back DSA problems.
+            const roleDsaGuidelines = (() => {
+              if (role.toLowerCase().includes('analyst')) {
+                return `The candidate is preparing for a Data Analyst role.
+                Instead of advanced algorithms, focus entirely on data querying, structures, and aggregations.
+                - Stage 1: Write SQL query with JOINs, aggregates, and CASE WHEN logic (e.g. active users count).
+                - Stage 2: Write Python Pandas script to filter, deduplicate, or group data.
+                - Stage 3: Write SQL query utilizing Window Functions (e.g. ROW_NUMBER, RANK, moving averages).
+                Difficulty level is scaled: easy (simple aggregates/filters), medium (joins, windows, subqueries), hard (complex query optimizations, CTEs).`
+              }
+              const difficultyProblems: Record<string, string> = {
+                easy: 'Stage 1: an array/string manipulation problem (e.g. two-sum, valid parentheses). Stage 2: a linked list or stack/queue problem. Stage 3: a binary search variant.',
+                medium: 'Stage 1: a sliding window or two-pointer problem. Stage 2: a binary tree traversal or BFS/DFS problem. Stage 3: a dynamic programming problem (1D DP like climbing stairs or house robber).',
+                hard: 'Stage 1: a graph problem (shortest path or cycle detection). Stage 2: an interval scheduling or merge problem. Stage 3: a 2D dynamic programming problem (edit distance, coin change 2, LCS).'
+              }
+              return difficultyProblems[difficulty] || difficultyProblems.medium
+            })()
+
+            return `You are an engineer running a Coding Round with 3 back-to-back programming problems.
 
 Candidate Profile:
 - Target Role: ${role}, Difficulty: ${difficulty}
-- Primary Language: ${skillsList.includes('C++') ? 'C++' : skillsList.includes('Java') ? 'Java' : skillsList.includes('Python') ? 'Python' : 'JavaScript'}
+- Primary Language: ${role.toLowerCase().includes('analyst') ? 'SQL' : skillsList.includes('C++') ? 'C++' : skillsList.includes('Java') ? 'Java' : skillsList.includes('Python') ? 'Python' : 'JavaScript'}
 - Skills: ${JSON.stringify(skillsList)}
 
 Session Structure (3 separate coding problems):
-${problemSet}
+${roleDsaGuidelines}
 
 Rules:
-1. Generate 3 DISTINCT, NAMED coding problems (e.g. "Longest Subarray with Sum K", "Number of Islands", "Edit Distance")
-2. Each problem is a separate agenda stage — do NOT reuse the same problem
-3. The code skeleton for stage 1 goes in "templates" — stages 2 and 3 skeletons go in agenda[1].templates and agenda[2].templates respectively
-4. Problems must be solvable with standard library only — no custom imports needed
+1. Generate 3 DISTINCT, NAMED coding problems appropriate for a ${role} role.
+2. Each problem is a separate agenda stage — do NOT reuse the same problem.
+3. The code skeleton for stage 1 goes in "templates" — stages 2 and 3 skeletons go in agenda[1].templates and agenda[2].templates respectively.
+4. For SDE/Frontend/Backend, templates should be provided in JavaScript, TypeScript, Python, C++, Java, and Go. For Data Analyst, templates should contain SQL scripts or Python Pandas code stubs.
 5. IMPORTANT: Do NOT place code comments inside or before closing parentheses/brackets/semicolons on the same line. Place comments at end of line only.
 
 The "initialQuestion" must introduce the interviewer and company, mention 3 problems across 45 minutes (~15 min each), and present the FIRST problem naturally as a real interviewer would describe it verbally. Ask for approach first, not code.
@@ -277,17 +313,33 @@ Return ONLY a raw JSON object:
     "cpp": "Problem 1 skeleton in C++",
     "java": "Problem 1 skeleton in Java",
     "go": "Problem 1 skeleton in Go",
-    "sql": ""
+    "sql": "Problem 1 skeleton in SQL"
   },
   "agenda": [
-    { "stage": 1, "topic": "Problem 1 name", "coreIntent": "Evaluate approach and correctness", "problemStatement": "Full problem description", "templates": { "javascript": "...", "typescript": "...", "python": "...", "cpp": "...", "java": "...", "go": "...", "sql": "" } },
-    { "stage": 2, "topic": "Problem 2 name", "coreIntent": "Evaluate efficiency and edge cases", "problemStatement": "Full problem description", "templates": { "javascript": "...", "typescript": "...", "python": "...", "cpp": "...", "java": "...", "go": "...", "sql": "" } },
-    { "stage": 3, "topic": "Problem 3 name", "coreIntent": "Evaluate optimization and complexity analysis", "problemStatement": "Full problem description", "templates": { "javascript": "...", "typescript": "...", "python": "...", "cpp": "...", "java": "...", "go": "...", "sql": "" } }
+    { "stage": 1, "topic": "Problem 1 name", "coreIntent": "Evaluate approach and correctness", "problemStatement": "Full problem description", "templates": { "javascript": "...", "typescript": "...", "python": "...", "cpp": "...", "java": "...", "go": "...", "sql": "..." } },
+    { "stage": 2, "topic": "Problem 2 name", "coreIntent": "Evaluate efficiency and edge cases", "problemStatement": "Full problem description", "templates": { "javascript": "...", "typescript": "...", "python": "...", "cpp": "...", "java": "...", "go": "...", "sql": "..." } },
+    { "stage": 3, "topic": "Problem 3 name", "coreIntent": "Evaluate optimization and complexity analysis", "problemStatement": "Full problem description", "templates": { "javascript": "...", "typescript": "...", "python": "...", "cpp": "...", "java": "...", "go": "...", "sql": "..." } }
   ]
 }`
           }
 
           // CS Fundamentals & System Design
+          const designStructure = (() => {
+            if (role.toLowerCase().includes('analyst')) {
+              return `Stage 1: Relational Schema Design (tables, keys, normalization vs denormalization)
+              Stage 2: Data Warehouse design (Star vs Snowflake schemas, dimensions, facts, partitioning)
+              Stage 3: Data Pipeline (ETL/ELT design, batch vs stream processing, data validation)`
+            }
+            if (role.toLowerCase().includes('frontend')) {
+              return `Stage 1: Component Architecture & State Management (caching, infinite scroll, render loop)
+              Stage 2: Browser Performance & Optimization (SSR vs CSR vs ISR, asset loading, browser storage)
+              Stage 3: Client-side Security & APIs (XSS, CSRF, WebSocket vs HTTP polling, Web Workers)`
+            }
+            return `Stage 1: Low-level design (class design, OOP principles, design patterns)
+            Stage 2: System component deep-dive (caching, queuing, database indexing, OS concepts)
+            Stage 3: Scale & trade-offs (CAP theorem, consistency models, horizontal vs vertical scaling)`
+          })()
+
           return `You are a Principal Engineer running a CS Fundamentals & System Design interview.
 
 Candidate Profile:
@@ -296,11 +348,9 @@ Candidate Profile:
 - Profile: ${summaryText}
 
 Session Structure (3 stages):
-Stage 1: Low-level design (class design, OOP principles, design patterns)
-Stage 2: System component deep-dive (caching, queuing, database indexing, OS concepts)
-Stage 3: Scale & trade-offs (CAP theorem, consistency models, horizontal vs vertical scaling)
+${designStructure}
 
-Generate a realistic interview session with a named interviewer at a relevant company. The "initialQuestion" must present a design problem naturally (e.g. "Design a URL shortener", "Design a rate limiter") and ask for the candidate's initial high-level thinking before any implementation.
+Generate a realistic interview session with a named interviewer at a relevant company. The "initialQuestion" must present a design problem naturally (e.g. for SDE: "Design a URL shortener"; for Frontend: "Design an autocomplete search bar"; for Data Analyst: "Design a telemetry data ingestion schema") and ask for the candidate's initial high-level thinking before any implementation.
 
 IMPORTANT: Code comments must appear at end of line only, never inside or before closing brackets.
 
@@ -318,9 +368,9 @@ Return ONLY a raw JSON object:
     "sql": "Schema SQL if applicable"
   },
   "agenda": [
-    { "stage": 1, "topic": "Low-Level Design", "coreIntent": "Evaluate OOP and design pattern usage" },
-    { "stage": 2, "topic": "System Component Deep-Dive", "coreIntent": "Evaluate CS fundamentals knowledge" },
-    { "stage": 3, "topic": "Scale & Trade-offs", "coreIntent": "Evaluate systems thinking" }
+    { "stage": 1, "topic": "Stage 1 topic", "coreIntent": "Evaluate foundational structure" },
+    { "stage": 2, "topic": "Stage 2 topic", "coreIntent": "Evaluate component depth" },
+    { "stage": 3, "topic": "Stage 3 topic", "coreIntent": "Evaluate scaling trade-offs" }
   ]
 }`
         })()

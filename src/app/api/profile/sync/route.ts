@@ -17,10 +17,12 @@ export async function POST(request: Request) {
 
     // 2. Synthesize initial profile summary data based on targeted tracks
     const defaultSkills = role.toLowerCase().includes('frontend') 
-      ? ['React', 'TypeScript', 'TailwindCSS', 'Next.js', 'CSS Grid', 'Framer Motion']
+      ? ['React', 'TypeScript', 'TailwindCSS', 'Next.js', 'CSS Grid', 'Framer Motion', 'JavaScript']
       : role.toLowerCase().includes('backend')
-      ? ['Node.js', 'TypeScript', 'PostgreSQL', 'Redis', 'Express', 'System Design', 'C++', 'Java']
-      : ['React', 'Node.js', 'TypeScript', 'PostgreSQL', 'C++', 'Java', 'Algorithms']
+      ? ['Node.js', 'TypeScript', 'PostgreSQL', 'Redis', 'Express', 'System Design', 'C++', 'Java', 'Go']
+      : role.toLowerCase().includes('analyst')
+      ? ['SQL', 'Python', 'Pandas', 'NumPy', 'Tableau', 'PowerBI', 'Excel', 'Statistics', 'Data Warehousing']
+      : ['React', 'Node.js', 'TypeScript', 'PostgreSQL', 'C++', 'Java', 'Algorithms', 'System Design']
 
 
     const profileSummary = {

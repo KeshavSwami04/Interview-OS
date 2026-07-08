@@ -288,7 +288,7 @@ export default function OnboardingPage() {
                 <div className="space-y-3">
                   <label className="text-xs font-semibold text-neutral-400 uppercase tracking-wider">Target Job Role</label>
                   <div className="grid grid-cols-2 gap-3">
-                    {['SDE Intern', 'Software Engineer', 'Backend Engineer', 'Frontend Engineer'].map((role) => (
+                    {['SDE', 'Backend Developer', 'Frontend Developer', 'Data Analyst'].map((role) => (
                       <button
                         key={role}
                         onClick={() => setSelectedRole(role)}
@@ -307,8 +307,8 @@ export default function OnboardingPage() {
 
                 <div className="space-y-3">
                   <label className="text-xs font-semibold text-neutral-400 uppercase tracking-wider">Interview Difficulty Level</label>
-                  <div className="grid grid-cols-4 gap-2">
-                    {['easy', 'medium', 'hard', 'faang'].map((level) => (
+                  <div className="grid grid-cols-3 gap-2">
+                    {['easy', 'medium', 'hard'].map((level) => (
                       <button
                         key={level}
                         onClick={() => setDifficulty(level)}

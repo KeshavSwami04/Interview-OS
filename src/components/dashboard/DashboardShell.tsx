@@ -380,12 +380,10 @@ export default function DashboardShell({ user, profile, initialInterviews }: Das
                     onChange={(e) => setRole(e.target.value)}
                     className="w-full py-1.5 px-3 bg-[#0A0A0A] border border-[#262626] text-white text-xs rounded-md focus:outline-none focus:border-[#0066FF]"
                   >
-                    <option value="SDE Intern">SDE Intern</option>
-                    <option value="Fresher / Campus Hire">Fresher / Campus Hire</option>
-                    <option value="Software Engineer">Software Engineer</option>
-                    <option value="Full Stack Engineer">Full Stack Engineer</option>
-                    <option value="Backend Engineer">Backend Engineer</option>
-                    <option value="Frontend Engineer">Frontend Engineer</option>
+                    <option value="SDE">SDE</option>
+                    <option value="Backend Developer">Backend Developer</option>
+                    <option value="Frontend Developer">Frontend Developer</option>
+                    <option value="Data Analyst">Data Analyst</option>
                   </select>
                 </div>
 
