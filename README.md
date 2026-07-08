@@ -1,7 +1,7 @@
 # Interview OS
 > **AI Technical Mock Interview Platform**
 
-Interview OS is an interactive mock interview platform designed to simulate realistic technical screening rounds with Principal and Senior Software Engineers. Instead of generic quiz templates or static question lists, Interview OS leverages candidate resumes, GitHub projects, and target roles to dynamically generate customized, deep-dive coding sessions in a Monaco editor workspace.
+Interview OS is an interactive mock interview platform designed to simulate realistic technical screening rounds with industry interviewers. Instead of generic templates or static question lists, Interview OS leverages candidate resumes, GitHub projects, and target roles to dynamically generate customized, deep-dive coding and design sessions in a Monaco editor workspace.
 
 ## Live Demo
 
@@ -61,16 +61,21 @@ sequenceDiagram
 
 ---
 
-## Key Features
+## Core Features
 
 *   **Four Specialized Mock Focus Tracks:**
-    *   **Live PR Critique:** The AI reads the candidate's tech stack, generates a realistic buggy codebase (such as Go channels race conditions, Python thread locks, or JavaScript event loop errors) and acts as a senior reviewer.
-    *   **CS Fundamentals and System Design:** Focuses on low-level class design (OOP), cache replacement logic (LRU), network sockets (TCP/UDP), and OS threads.
-    *   **General DSA Sandbox:** Practice classic algorithms formatted in the candidate's chosen language (JavaScript, TypeScript, Python, C++, Java, Go, SQL).
-    *   **Resume and Projects Grill:** Tailored specifically to ask questions about projects and tech stacks parsed from the candidate's uploaded resume.
-*   **Dynamic Agenda Tracker:** Guides candidates through distinct phases (Conceptual Walkthrough, Coding implementation, and Edge Cases / Review) in real time.
-*   **Interactive Monaco Sandbox:** Write and refactor code directly inside a live code editor matching the target track.
-*   **Seamless Supabase Integration:** Secure database logging, row-level security (RLS) policies, and profile syncs.
+    *   **Live PR Critique:** The AI inspects the candidate's target repository and generates a realistic pull request code review. The bug is customized by target role (e.g. SQL join aggregation logic for Data Analysts, React infinite loop re-renders for Frontend Developers, and async race conditions or leaks for Backend Developers/SDEs).
+    *   **CS Fundamentals and System Design:** Covers structured theory across 3 distinct stages, specialized by role (e.g. Star/Snowflake modeling for Data Analysts, client state and caching for Frontend, concurrency/message queues for Backend/SDE).
+    *   **DSA Sandbox (Multi-Problem Coding):** Simulates standard coding rounds by presenting 3 distinct, back-to-back coding challenges per session. The AI automatically advances the candidate to the next problem upon code correctness or successful complexity analysis.
+    *   **Resume and Projects Grill:** A conversational interview focusing on the candidate's actual projects, architecture trade-offs, and technical achievements parsed directly from their uploaded resume, prompting one targeted question at a time.
+*   **Targeted Role Alignment:** Tailor mock rounds to specialized industry positions:
+    *   SDE (Software Development Engineer)
+    *   Backend Developer
+    *   Frontend Developer
+    *   Data Analyst
+*   **Automatic Session Retention Limit:** Enforces a maximum limit of 5 mock interviews per user. When creating a 6th session, the platform automatically purges the oldest session and all its cascading transcript messages from the database.
+*   **Strict Calibrated Scorecard Evaluation:** Concluded sessions are analyzed using pre-computed participation metrics (word counts, response frequencies, code submission checks) against a strict scoring rubric, preventing AI score inflation and applying hard caps for zero or minimal participation.
+*   **Interactive Monaco Sandbox:** Write, review, and refactor code directly inside a live code editor matching the target track and programming language (JavaScript, TypeScript, Python, C++, Java, Go, SQL).
 
 ---
 
@@ -78,7 +83,7 @@ sequenceDiagram
 
 *   **Framework:** Next.js 16 (App Router, Edge Runtime API Routes)
 *   **Database:** Supabase (PostgreSQL client, `@supabase/ssr` server-side cookies, Row Level Security)
-*   **Authentication:** Supabase Auth
+*   **Authentication:** Supabase Auth (Native email sign-in logic)
 *   **AI Engine:** OpenRouter API (Gemini/Mistral Model Integration)
 *   **Editor:** Monaco Code Editor (`@monaco-editor/react`)
 *   **Styling:** Custom Glassmorphism, Dark UI, Framer Motion animations
