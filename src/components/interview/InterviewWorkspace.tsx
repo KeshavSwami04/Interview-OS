@@ -41,6 +41,33 @@ export default function InterviewWorkspace({ interview, initialMessages }: Inter
   const [hintText, setHintText] = useState<string | null>(null)
   const [loadingHint, setLoadingHint] = useState(false)
 
+  // Countdown timer state (45 minutes = 2700 seconds)
+  const [timeLeft, setTimeLeft] = useState(2700)
+  
+  // Terminal state
+  const [showTerminal, setShowTerminal] = useState(false)
+  const [isRunningCode, setIsRunningCode] = useState(false)
+  const [terminalOutput, setTerminalOutput] = useState('')
+  const [terminalStatus, setTerminalStatus] = useState<'idle' | 'success' | 'compile_error' | 'runtime_error'>('idle')
+  const [terminalErrorLog, setTerminalErrorLog] = useState('')
+
+  // Handle countdown tick
+  useEffect(() => {
+    if (timeLeft <= 0) return
+    const interval = setInterval(() => {
+      setTimeLeft(prev => prev - 1)
+    }, 1000)
+    return () => clearInterval(interval)
+  }, [timeLeft])
+
+  // Helper to format remaining seconds into MM:SS
+  const formatTime = (seconds: number) => {
+    const mins = Math.floor(seconds / 60)
+    const secs = seconds % 60
+    return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`
+  }
+
+
   // Build a multi-language template map — db templates take priority, client fallbacks always available
   const defaultTemplates = useMemo(() => {
     const db = interview.agenda?.[0]?.templates || {}
@@ -267,6 +294,47 @@ export default function InterviewWorkspace({ interview, initialMessages }: Inter
     }
   }
 
+  // Submit code to compile and run execution stubs
+  const handleRunCode = async () => {
+    setIsRunningCode(true)
+    setShowTerminal(true)
+    setTerminalStatus('idle')
+    setTerminalOutput('Compiling code and initializing execution sandbox environment...\n')
+    setTerminalErrorLog('')
+
+    try {
+      const response = await fetch(`/api/interviews/${interview.id}/run`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          code: codeContent,
+          language: editorLanguage,
+        }),
+      })
+
+      if (!response.ok) {
+        throw new Error('Failed to run code')
+      }
+
+      const result = await response.json()
+      setTerminalStatus(result.status)
+      if (result.status === 'success') {
+        setTerminalOutput(result.output || 'Execution complete with code 0.\n')
+      } else {
+        setTerminalOutput(result.output || 'Execution failed.\n')
+        setTerminalErrorLog(result.errorLog || 'Unknown compiler error occurred.\n')
+      }
+    } catch (err: any) {
+      console.error(err)
+      setTerminalStatus('runtime_error')
+      setTerminalErrorLog(err.message || 'Execution environment crash.')
+    } finally {
+      setIsRunningCode(false)
+    }
+  }
+
   // End interview and generate report card
   const handleConcludeSession = async () => {
     setIsConcluding(true)
@@ -305,6 +373,17 @@ export default function InterviewWorkspace({ interview, initialMessages }: Inter
             </h1>
             <p className="text-[10px] text-neutral-400 capitalize">{interview.role} • {interview.difficulty} level</p>
           </div>
+        </div>
+
+        {/* Live Countdown Timer */}
+        <div className="flex items-center gap-2 px-3 py-1 bg-[#121212] border border-[#1F1F1F] rounded-md">
+          <svg className={`h-3.5 w-3.5 ${timeLeft < 300 ? 'text-red-500 animate-pulse' : 'text-[#0066FF]'}`} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+            <circle cx="12" cy="12" r="10" />
+            <polyline points="12 6 12 12 16 14" />
+          </svg>
+          <span className={`text-[11px] font-mono font-bold tracking-wider ${timeLeft < 300 ? 'text-red-400 font-extrabold animate-pulse' : 'text-neutral-300'}`}>
+            {timeLeft <= 0 ? 'TIME IS UP' : formatTime(timeLeft)}
+          </span>
         </div>
 
         <div className="flex items-center gap-3">
@@ -389,55 +468,163 @@ export default function InterviewWorkspace({ interview, initialMessages }: Inter
         </div>
 
         {/* Right Side: Monaco Code Editor */}
-        <div className="w-1/2 flex flex-col bg-[#0E0E0E]">
+        <div className="w-1/2 flex flex-col bg-[#0E0E0E] relative">
+          
           {/* Top Panel editor config tabs */}
-          <div className="h-10 border-b border-[#1F1F1F] bg-[#121212] flex items-center justify-between px-4">
+          <div className="h-10 border-b border-[#1F1F1F] bg-[#121212] flex items-center justify-between px-4 flex-shrink-0">
             <span className="text-[10px] text-neutral-400 font-bold uppercase tracking-widest flex items-center gap-1.5">
               <Code2 className="h-3.5 w-3.5 text-[#0066FF]" />
               Monaco Code Sandbox
             </span>
-            <select
-              value={editorLanguage}
-              onChange={(e) => handleLanguageChange(e.target.value)}
-              className="py-1 px-2.5 bg-[#0A0A0A] border border-[#262626] text-white text-[10px] rounded focus:outline-none focus:border-[#0066FF]"
-            >
-              <option value="javascript">JavaScript</option>
-              <option value="typescript">TypeScript</option>
-              <option value="python">Python</option>
-              <option value="cpp">C++</option>
-              <option value="java">Java</option>
-              <option value="go">Go</option>
-              <option value="sql">SQL</option>
-            </select>
+            <div className="flex items-center gap-2">
+              <select
+                value={editorLanguage}
+                onChange={(e) => handleLanguageChange(e.target.value)}
+                className="py-1 px-2.5 bg-[#0A0A0A] border border-[#262626] text-white text-[10px] rounded focus:outline-none focus:border-[#0066FF] cursor-pointer"
+              >
+                <option value="javascript">JavaScript</option>
+                <option value="typescript">TypeScript</option>
+                <option value="python">Python</option>
+                <option value="cpp">C++</option>
+                <option value="java">Java</option>
+                <option value="go">Go</option>
+                <option value="sql">SQL</option>
+              </select>
 
+              {/* Run Code Button */}
+              <button
+                onClick={handleRunCode}
+                disabled={isRunningCode}
+                className="flex items-center gap-1 py-1 px-3 bg-[#0066FF] hover:bg-[#0052CC] disabled:opacity-50 text-white text-[10px] font-bold rounded cursor-pointer transition-colors"
+              >
+                {isRunningCode ? (
+                  <Loader2 className="h-3 w-3 animate-spin" />
+                ) : (
+                  <Terminal className="h-3 w-3" />
+                )}
+                Run Code
+              </button>
+
+              {/* Terminal toggle button */}
+              <button
+                onClick={() => setShowTerminal(prev => !prev)}
+                className={`flex items-center gap-1 py-1 px-2.5 rounded border text-[10px] font-bold transition-all cursor-pointer ${
+                  showTerminal 
+                    ? 'bg-[#1F1F1F] border-[#333] text-white' 
+                    : 'bg-[#0A0A0A] border-[#262626] text-neutral-400 hover:text-white'
+                }`}
+              >
+                Console
+              </button>
+            </div>
           </div>
 
-          {/* Monaco Editor Component instance */}
-          <div className="flex-1 relative">
-            <Editor
-              height="100%"
-              defaultLanguage="javascript"
-              language={editorLanguage}
-              theme="vs-dark"
-              value={codeContent}
-              onChange={(value) => {
-                setCodeContent(value || '')
-                setIsDirty(true)
-              }}
+          {/* Monaco Editor and Terminal flex layout */}
+          <div className="flex-grow flex flex-col overflow-hidden relative">
+            
+            {/* Monaco Editor Component instance */}
+            <div className="flex-1 relative overflow-hidden">
+              <Editor
+                height="100%"
+                defaultLanguage="javascript"
+                language={editorLanguage}
+                theme="vs-dark"
+                value={codeContent}
+                onChange={(value) => {
+                  setCodeContent(value || '')
+                  setIsDirty(true)
+                }}
+                options={{
+                  minimap: { enabled: false },
+                  fontSize: 13,
+                  fontFamily: 'var(--font-geist-mono), monospace',
+                  lineHeight: 20,
+                  wordWrap: 'on',
+                  padding: { top: 16, bottom: 16 },
+                  scrollbar: {
+                    verticalScrollbarSize: 6,
+                    horizontalScrollbarSize: 6
+                  }
+                }}
+              />
+            </div>
 
-              options={{
-                minimap: { enabled: false },
-                fontSize: 13,
-                fontFamily: 'var(--font-geist-mono), monospace',
-                lineHeight: 20,
-                wordWrap: 'on',
-                padding: { top: 16, bottom: 16 },
-                scrollbar: {
-                  verticalScrollbarSize: 6,
-                  horizontalScrollbarSize: 6
-                }
-              }}
-            />
+            {/* Collapsible Terminal Console */}
+            <div 
+              className={`border-t border-[#1F1F1F] bg-[#070707] flex flex-col transition-all duration-300 ${
+                showTerminal ? 'h-56' : 'h-8'
+              }`}
+            >
+              {/* Terminal header */}
+              <div 
+                onClick={() => setShowTerminal(prev => !prev)}
+                className="h-8 bg-[#0D0D0D] px-4 flex items-center justify-between border-b border-[#1F1F1F] cursor-pointer hover:bg-[#121212]"
+              >
+                <div className="flex items-center gap-1.5">
+                  <span className={`h-1.5 w-1.5 rounded-full ${
+                    isRunningCode ? 'bg-amber-500 animate-pulse' :
+                    terminalStatus === 'success' ? 'bg-emerald-500' :
+                    terminalStatus === 'idle' ? 'bg-neutral-600' : 'bg-red-500'
+                  }`} />
+                  <span className="text-[9px] font-bold text-neutral-400 uppercase tracking-widest font-mono">
+                    {isRunningCode ? 'Executing Sandbox...' : 'Interactive Output Shell'}
+                  </span>
+                </div>
+                <span className="text-[10px] text-neutral-500 font-mono">
+                  {showTerminal ? '▼ Collapse' : '▲ Expand'}
+                </span>
+              </div>
+
+              {/* Terminal Body */}
+              {showTerminal && (
+                <div className="flex-1 p-4 font-mono text-[11px] leading-relaxed overflow-y-auto text-neutral-300 selection:bg-[#0066FF] selection:text-white">
+                  {isRunningCode ? (
+                    <div className="flex items-center gap-2 text-amber-400">
+                      <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                      <span>Running test assertions on compiler container...</span>
+                    </div>
+                  ) : terminalStatus === 'idle' ? (
+                    <div className="text-neutral-500">
+                      <span>Console is idle. Write your code and click "Run Code" to execute tests.</span>
+                    </div>
+                  ) : (
+                    <div className="space-y-3">
+                      {/* Code Execution Status */}
+                      <div className="flex items-center gap-2">
+                        <span className="text-neutral-500">Status:</span>
+                        <span className={`font-bold px-1.5 py-0.5 rounded text-[10px] uppercase ${
+                          terminalStatus === 'success' ? 'bg-emerald-950/50 border border-emerald-900/50 text-emerald-400' :
+                          'bg-red-950/50 border border-red-900/50 text-red-400'
+                        }`}>
+                          {terminalStatus}
+                        </span>
+                      </div>
+
+                      {/* Stdout Output Logs */}
+                      {terminalOutput && (
+                        <div className="space-y-1">
+                          <span className="text-neutral-500 font-bold block">Console output:</span>
+                          <pre className="p-3 rounded bg-[#0A0A0A] border border-[#141414] overflow-x-auto whitespace-pre-wrap leading-relaxed text-neutral-200">
+                            {terminalOutput}
+                          </pre>
+                        </div>
+                      )}
+
+                      {/* Error Tracebacks */}
+                      {terminalErrorLog && (
+                        <div className="space-y-1">
+                          <span className="text-red-500 font-bold block">Error trace:</span>
+                          <pre className="p-3 rounded bg-red-950/10 border border-red-950/30 overflow-x-auto whitespace-pre-wrap leading-relaxed text-red-400">
+                            {terminalErrorLog}
+                          </pre>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+
           </div>
         </div>
 
